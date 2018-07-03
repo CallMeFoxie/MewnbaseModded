@@ -1,0 +1,12 @@
+[submodule "src/extra/box2d-editor"]
+	path = src/extra/box2d-editor
+	url = https://github.com/MovingBlocks/box2d-editor.git
+[submodule "src/extra/jlibnoise"]
+	path = src/extra/jlibnoise
+	url = https://github.com/RoyAwesome/jlibnoise.git
+[submodule "src/extra/jMapGen"]
+	path = src/extra/jMapGen
+	url = git@github.com:CallMeFoxie/jMapGen.git
+[submodule "src/extra/libgdx-contribs"]
+	path = src/extra/libgdx-contribs
+	url = https://github.com/manuelbua/libgdx-contribs.git

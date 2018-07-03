@@ -1,0 +1,826 @@
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/BaseGroup.java src/main/java/com/cairn4/moonbase/BaseGroup.java
+--- ../srcjar/decompiled-0.44.2/moonbase/BaseGroup.java	2018-07-02 21:47:08.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/BaseGroup.java	2018-07-03 12:30:58.857513234 +0200
+@@ -4,6 +4,7 @@ import com.cairn4.moonbase.tiles.BaseMod
+ import com.cairn4.moonbase.tiles.behaviors.BaseResourceStorageBehavior;
+ import com.cairn4.moonbase.tiles.behaviors.Behavior;
+ import com.cairn4.moonbase.ui.Localization;
++
+ import java.text.DecimalFormat;
+ import java.util.ArrayList;
+ import java.util.Iterator;
+@@ -143,7 +144,6 @@ public class BaseGroup {
+ 
+       float newResources = totalResourceGen;
+ 
+-      BaseModule b;
+       for(var8 = this.baseModuleList.iterator(); var8.hasNext(); totalDraw += b.getResourceDrawRate(type) * delta) {
+          b = (BaseModule)var8.next();
+          if (b.getPowerDrawRate() * delta <= newResources) {
+@@ -233,7 +233,7 @@ public class BaseGroup {
+             }
+          }
+ 
+-         resourcePool - consumed;
++         resourcePool -= consumed;
+          return;
+       }
+    }
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/Buggie.java src/main/java/com/cairn4/moonbase/Buggie.java
+--- ../srcjar/decompiled-0.44.2/moonbase/Buggie.java	2018-07-02 21:47:08.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/Buggie.java	2018-07-03 12:32:27.138332357 +0200
+@@ -646,7 +646,7 @@ public class Buggie extends Entity {
+       Iterator var4 = this.wheels.iterator();
+ 
+       while(var4.hasNext()) {
+-         Wheel w = (Wheel)var4.next();
++         w = (Wheel)var4.next();
+          if (w.isPowered && w.functioning) {
+             w.wheel.applyForce(w.wheel.getWorldVector(fvect), w.wheel.getWorldCenter(), true);
+          }
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/desktop/DesktopLauncher.java src/main/java/com/cairn4/moonbase/desktop/DesktopLauncher.java
+--- ../srcjar/decompiled-0.44.2/moonbase/desktop/DesktopLauncher.java	2018-07-02 21:47:10.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/desktop/DesktopLauncher.java	2018-07-03 12:32:26.966330756 +0200
+@@ -1,6 +1,8 @@
+ package com.cairn4.moonbase.desktop;
+ 
++import com.badlogic.gdx.Application;
+ import com.badlogic.gdx.Files.FileType;
++import com.badlogic.gdx.Gdx;
+ import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
+ import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
+ import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration.HdpiMode;
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/ItemData.java src/main/java/com/cairn4/moonbase/ItemData.java
+--- ../srcjar/decompiled-0.44.2/moonbase/ItemData.java	2018-07-02 21:47:08.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/ItemData.java	2018-07-03 12:32:27.190332840 +0200
+@@ -2,6 +2,8 @@ package com.cairn4.moonbase;
+ 
+ import com.badlogic.gdx.Gdx;
+ import com.cairn4.moonbase.ui.Localization;
++import com.cairn4.moonbase.worlddata.InventoryItemData;
++
+ import java.util.ArrayList;
+ import java.util.MissingResourceException;
+ 
+@@ -13,9 +15,9 @@ public class ItemData {
+    public float craftTime;
+    public boolean rotatable;
+    public String useAnimName;
+-   public ArrayList requires = new ArrayList();
+-   public ArrayList actions = new ArrayList();
+-   public ArrayList craftingBonusItems = new ArrayList();
++   public ArrayList<RecipieRequirement> requires = new ArrayList();
++   public ArrayList<ItemActions> actions = new ArrayList();
++   public ArrayList<InventoryItemData> craftingBonusItems = new ArrayList();
+    public String techReq;
+    public int researchPoints;
+    /** @deprecated */
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/ItemDataSet.java src/main/java/com/cairn4/moonbase/ItemDataSet.java
+--- ../srcjar/decompiled-0.44.2/moonbase/ItemDataSet.java	2018-07-02 21:47:08.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/ItemDataSet.java	2018-07-03 12:32:27.258333474 +0200
+@@ -3,5 +3,5 @@ package com.cairn4.moonbase;
+ import java.util.ArrayList;
+ 
+ public class ItemDataSet {
+-   public ArrayList itemDataList = new ArrayList();
++   public ArrayList<ItemData> itemDataList = new ArrayList();
+ }
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/ItemFactory.java src/main/java/com/cairn4/moonbase/ItemFactory.java
+--- ../srcjar/decompiled-0.44.2/moonbase/ItemFactory.java	2018-07-02 21:47:08.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/ItemFactory.java	2018-07-03 12:32:27.262333510 +0200
+@@ -3,12 +3,14 @@ package com.cairn4.moonbase;
+ import com.badlogic.gdx.Gdx;
+ import com.badlogic.gdx.files.FileHandle;
+ import com.badlogic.gdx.utils.Json;
++import com.cairn4.moonbase.worlddata.InventoryItemData;
++
+ import java.util.ArrayList;
+ import java.util.Iterator;
+ 
+ public class ItemFactory {
+    private static ItemFactory instance;
+-   public static ArrayList ITEMDATALIST = new ArrayList();
++   public static ArrayList<ItemData> ITEMDATALIST = new ArrayList();
+ 
+    public static synchronized ItemFactory getInstance() {
+       if (instance == null) {
+@@ -98,7 +100,7 @@ public class ItemFactory {
+       return s;
+    }
+ 
+-   public ArrayList getCraftingBonus(String id) {
++   public ArrayList<InventoryItemData> getCraftingBonus(String id) {
+       Iterator var2 = ITEMDATALIST.iterator();
+ 
+       ItemData i;
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/Item.java src/main/java/com/cairn4/moonbase/Item.java
+--- ../srcjar/decompiled-0.44.2/moonbase/Item.java	2018-07-02 21:47:08.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/Item.java	2018-07-03 12:32:26.994331016 +0200
+@@ -9,7 +9,7 @@ import java.util.Iterator;
+ 
+ public class Item {
+    public String id;
+-   public ArrayList actions = new ArrayList();
++   public ArrayList<ItemActions> actions = new ArrayList();
+    private String sprite;
+    private boolean rotatable;
+ 
+@@ -40,7 +40,7 @@ public class Item {
+    public Item() {
+    }
+ 
+-   public Item(String id, String sprite, ArrayList actions, boolean rotatable) {
++   public Item(String id, String sprite, ArrayList<ItemActions> actions, boolean rotatable) {
+       this.id = id;
+       this.sprite = sprite;
+       this.actions = actions;
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/MoonBase.java src/main/java/com/cairn4/moonbase/MoonBase.java
+--- ../srcjar/decompiled-0.44.2/moonbase/MoonBase.java	2018-07-02 21:47:08.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/MoonBase.java	2018-07-03 12:32:27.194332878 +0200
+@@ -1,5 +1,6 @@
+ package com.cairn4.moonbase;
+ 
++import com.badlogic.gdx.Application;
+ import com.badlogic.gdx.Game;
+ import com.badlogic.gdx.Gdx;
+ import com.badlogic.gdx.Graphics.DisplayMode;
+@@ -88,6 +89,7 @@ public class MoonBase extends Game {
+ 
+       String os = System.getProperty("os.name");
+       Gdx.app.log("MewnBase", os);
++      Gdx.app.setLogLevel(Application.LOG_DEBUG);
+       if (os.toLowerCase().indexOf("mac") >= 0) {
+          DISCORD_ON = false;
+       }
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/PlayerInventory.java src/main/java/com/cairn4/moonbase/PlayerInventory.java
+--- ../srcjar/decompiled-0.44.2/moonbase/PlayerInventory.java	2018-07-02 21:47:06.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/PlayerInventory.java	2018-07-03 12:32:27.354334366 +0200
+@@ -12,7 +12,7 @@ import java.util.Iterator;
+ public class PlayerInventory {
+    public static final int MAX_ITEMS = 12;
+    private Player player;
+-   public ArrayList itemList = new ArrayList();
++   public ArrayList<ItemStack> itemList = new ArrayList();
+    private int selectedIndex;
+    public BuildingPlacementCursor.ORIENTATIONS placementOrientation;
+ 
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/Player.java src/main/java/com/cairn4/moonbase/Player.java
+--- ../srcjar/decompiled-0.44.2/moonbase/Player.java	2018-07-02 21:47:08.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/Player.java	2018-07-03 12:32:27.158332543 +0200
+@@ -242,8 +242,6 @@ public class Player extends Observable {
+       this.footLight.attachToBody(this.body);
+       this.footLight.setIgnoreAttachedBody(true);
+       this.footLight.setXray(true);
+-      short lightMask = true;
+-      short zero = false;
+       this.spineActor = new SpineActor("player", 0.27F, world.gameScreen.skeletonRenderer);
+       this.spineActor.setPosition(0.0F, 0.0F);
+       this.group.addActor(this.spineActor);
+@@ -329,20 +327,30 @@ public class Player extends Observable {
+       Gdx.app.log("MoonBase", "Player: Playing exit lander anim");
+       this.spineActor.state.setAnimation(0, "exit_lander", false);
+       this.spineActor.state.addListener(new AnimationStateListener() {
+-         public void event(int trackIndex, Event event) {
++         public void event(AnimationState.TrackEntry trackIndex, Event event) {
+          }
+ 
+-         public void complete(int trackIndex, int loopCount) {
++         public void complete(AnimationState.TrackEntry trackIndex) {
+             Player.this.world.gameScreen.gameLoader.autoSave(Player.this.world);
+             Player.this.world.gameState = World.GameStates.playing;
+             Player.this.world.gameScreen.hud.activate(Player.this.world);
+             Player.this.spineActor.state.clearListeners();
+          }
+ 
+-         public void start(int trackIndex) {
++         public void start(AnimationState.TrackEntry trackIndex) {
+          }
+ 
+-         public void end(int trackIndex) {
++         @Override
++         public void interrupt(AnimationState.TrackEntry entry) {
++
++         }
++
++         public void end(AnimationState.TrackEntry trackIndex) {
++         }
++
++         @Override
++         public void dispose(AnimationState.TrackEntry entry) {
++
+          }
+       });
+    }
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/techtree/TechTree.java src/main/java/com/cairn4/moonbase/techtree/TechTree.java
+--- ../srcjar/decompiled-0.44.2/moonbase/techtree/TechTree.java	2018-07-02 21:47:10.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/techtree/TechTree.java	2018-07-03 12:32:26.978330868 +0200
+@@ -3,5 +3,5 @@ package com.cairn4.moonbase.techtree;
+ import java.util.ArrayList;
+ 
+ public class TechTree {
+-   public ArrayList upgrades;
++   public ArrayList<TechUpgrade> upgrades;
+ }
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/TerrainGen.java src/main/java/com/cairn4/moonbase/TerrainGen.java
+--- ../srcjar/decompiled-0.44.2/moonbase/TerrainGen.java	2018-07-02 21:47:06.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/TerrainGen.java	2018-07-03 12:32:27.242333324 +0200
+@@ -11,6 +11,8 @@ import com.cairn4.moonbase.worlddata.Ite
+ import java.util.ArrayList;
+ import java.util.Iterator;
+ import java.util.List;
++
++import jMapGen.Point;
+ import za.co.luma.geom.Vector2DDouble;
+ import za.co.luma.math.sampling.Sampler;
+ import za.co.luma.math.sampling.UniformPoissonDiskSampler;
+@@ -28,19 +30,19 @@ public class TerrainGen {
+    float lz;
+    private static final int minDistBetweenResearchObjects = 18;
+    public static Color[] groundColors = new Color[]{new Color(1.0F, 1.0F, 1.0F, 1.0F), new Color(1.0F, 0.97F, 0.921F, 1.0F), new Color(1.0F, 0.905F, 0.819F, 1.0F), new Color(0.925F, 0.827F, 0.8F, 1.0F)};
+-   public ArrayList samplePoints = new ArrayList();
++   public ArrayList<GridPoint2> samplePoints = new ArrayList();
+ 
+    public TerrainGen(World world) {
+       this.world = world;
+       this.seed = MathUtils.random(10000);
+       this.simplexNoise = new SimplexNoise(this.seed);
+       Sampler sampler = new UniformPoissonDiskSampler(0.0D, 0.0D, 1000.0D, 1000.0D, 18.0D);
+-      List pointList = sampler.sample();
++      List<Point> pointList = sampler.sample();
+       Gdx.app.log("MewnBase", "TerrainGen: research objects : " + pointList.size());
+-      Iterator var4 = pointList.iterator();
++      Iterator<Point> var4 = pointList.iterator();
+ 
+       while(var4.hasNext()) {
+-         Vector2DDouble v = (Vector2DDouble)var4.next();
++         Point v = (Point)var4.next();
+          this.samplePoints.add(new GridPoint2((int)v.x, (int)v.y));
+       }
+ 
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/tiles/behaviors/GreenHouseSpriteBehavior.java src/main/java/com/cairn4/moonbase/tiles/behaviors/GreenHouseSpriteBehavior.java
+--- ../srcjar/decompiled-0.44.2/moonbase/tiles/behaviors/GreenHouseSpriteBehavior.java	2018-07-02 21:47:04.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/tiles/behaviors/GreenHouseSpriteBehavior.java	2018-07-03 12:32:26.714328412 +0200
+@@ -122,7 +122,7 @@ public class GreenHouseSpriteBehavior im
+          break;
+       case readyToHarvest:
+          sprite = this.plant3;
+-         if (!this.itemCrafter.itemsToCollect.isEmpty()) {
++         if (this.itemCrafter.itemsToCollect.size == 0) {
+             if (((ItemStack)this.itemCrafter.itemsToCollect.get(0)).getId().equals("plant")) {
+                this.plant3.setDrawable(this.gameScreen.skin.getDrawable("greenhouse-plant-full"));
+             }
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/tiles/Conduit.java src/main/java/com/cairn4/moonbase/tiles/Conduit.java
+--- ../srcjar/decompiled-0.44.2/moonbase/tiles/Conduit.java	2018-07-02 21:47:04.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/tiles/Conduit.java	2018-07-03 12:32:26.794329156 +0200
+@@ -40,10 +40,6 @@ public class Conduit extends BaseModule
+       Tile south = this.world.getTile(this.worldX, this.worldY - 1);
+       Tile east = this.world.getTile(this.worldX + 1, this.worldY);
+       Tile west = this.world.getTile(this.worldX - 1, this.worldY);
+-      int S = false;
+-      int E = false;
+-      int N = false;
+-      int W = false;
+       int N = this.checkTile(north, 4);
+       int S = this.checkTile(south, 1);
+       int E = this.checkTile(east, 2);
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/tiles/GroundTile.java src/main/java/com/cairn4/moonbase/tiles/GroundTile.java
+--- ../srcjar/decompiled-0.44.2/moonbase/tiles/GroundTile.java	2018-07-02 21:47:04.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/tiles/GroundTile.java	2018-07-03 12:32:26.878329937 +0200
+@@ -122,7 +122,6 @@ public class GroundTile implements Poola
+       case sand:
+          this.spriteName = "test/sand-15";
+          float rS = MathUtils.random();
+-         int rAlt;
+          if (rS > 0.4F && rS <= 0.9F) {
+             rAlt = MathUtils.random(1, 3);
+             this.spriteName = this.spriteName + "-alt" + rAlt;
+@@ -135,7 +134,7 @@ public class GroundTile implements Poola
+          this.spriteName = "test/rock-15";
+          float r2 = MathUtils.random();
+          if (r2 > 0.7F) {
+-            int rAlt = MathUtils.random(1, 2);
++            rAlt = MathUtils.random(1, 2);
+             this.spriteName = this.spriteName + "-alt" + rAlt;
+          }
+       }
+@@ -155,10 +154,6 @@ public class GroundTile implements Poola
+       GroundTile northWest = this.world.getGroundTile(this.worldX - 1, this.worldY + 1);
+       GroundTile southEast = this.world.getGroundTile(this.worldX + 1, this.worldY - 1);
+       GroundTile southWest = this.world.getGroundTile(this.worldX - 1, this.worldY - 1);
+-      int bSW = true;
+-      int bSE = true;
+-      int bNE = true;
+-      int bNW = true;
+       int SW = 0;
+       int SE = 0;
+       int NE = 0;
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/tiles/RepairDroneBase.java src/main/java/com/cairn4/moonbase/tiles/RepairDroneBase.java
+--- ../srcjar/decompiled-0.44.2/moonbase/tiles/RepairDroneBase.java	2018-07-02 21:47:02.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/tiles/RepairDroneBase.java	2018-07-03 12:32:26.950330607 +0200
+@@ -88,7 +88,7 @@ public class RepairDroneBase extends Bas
+       }
+ 
+       final GridPoint2 baseCoord = new GridPoint2(this.worldX, this.worldY);
+-      Collections.sort(this.basesWithDisasters, new Comparator() {
++      Collections.sort(this.basesWithDisasters, new Comparator<BaseModule>() {
+          public int compare(BaseModule base1, BaseModule base2) {
+             float dist1 = baseCoord.dst(new GridPoint2(base1.worldX, base1.worldY));
+             float dist2 = baseCoord.dst(new GridPoint2(base2.worldX, base2.worldY));
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/ui/BuggieTrunkUI.java src/main/java/com/cairn4/moonbase/ui/BuggieTrunkUI.java
+--- ../srcjar/decompiled-0.44.2/moonbase/ui/BuggieTrunkUI.java	2018-07-02 21:47:02.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/ui/BuggieTrunkUI.java	2018-07-03 12:32:26.274324318 +0200
+@@ -108,7 +108,7 @@ public class BuggieTrunkUI extends Popup
+    }
+ 
+    private void updateGrid() {
+-      final int buildableIndex = 0;
++      int buildableIndex = 0;
+ 
+       int bi;
+       ItemButton b;
+@@ -120,18 +120,19 @@ public class BuggieTrunkUI extends Popup
+             b.setIcon(spriteId);
+             b.setCount(((ItemStack)this.playerInventory.getItemList().get(buildableIndex)).getAmount());
+             b.clearListeners();
++            final int buildableIndex2 = buildableIndex;
+             b.addListener(new ClickListener() {
+                public void clicked(InputEvent event, float x, float y) {
+                   if (!Gdx.input.isKeyPressed(59) && !Gdx.input.isKeyPressed(60)) {
+-                     BuggieTrunkUI.this.moveToStorage(buildableIndex, false);
++                     BuggieTrunkUI.this.moveToStorage(buildableIndex2, false);
+                   } else {
+-                     BuggieTrunkUI.this.moveToStorage(buildableIndex, true);
++                     BuggieTrunkUI.this.moveToStorage(buildableIndex2, true);
+                   }
+ 
+                }
+ 
+                public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
+-                  BuggieTrunkUI.this.createTooltip(((ItemStack)BuggieTrunkUI.this.playerInventory.getItemList().get(buildableIndex)).item.getName());
++                  BuggieTrunkUI.this.createTooltip(((ItemStack)BuggieTrunkUI.this.playerInventory.getItemList().get(buildableIndex2)).item.getName());
+                }
+ 
+                public void exit(InputEvent event, float x, float y, int pointer, Actor toActor) {
+@@ -157,18 +158,19 @@ public class BuggieTrunkUI extends Popup
+             b.enable();
+             b.setIcon(((ItemStack)this.itemStorage.getItemList().get(buildableIndex)).getSprite());
+             b.setCount(((ItemStack)this.itemStorage.getItemList().get(buildableIndex)).getAmount());
++            final int buildableIndex2 = buildableIndex;
+             b.addListener(new ClickListener() {
+                public void clicked(InputEvent event, float x, float y) {
+                   if (!Gdx.input.isKeyPressed(59) && !Gdx.input.isKeyPressed(60)) {
+-                     BuggieTrunkUI.this.moveToInventory(buildableIndex, false);
++                     BuggieTrunkUI.this.moveToInventory(buildableIndex2, false);
+                   } else {
+-                     BuggieTrunkUI.this.moveToInventory(buildableIndex, true);
++                     BuggieTrunkUI.this.moveToInventory(buildableIndex2, true);
+                   }
+ 
+                }
+ 
+                public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
+-                  BuggieTrunkUI.this.createTooltip(((ItemStack)BuggieTrunkUI.this.itemStorage.getItemList().get(buildableIndex)).item.getName());
++                  BuggieTrunkUI.this.createTooltip(((ItemStack)BuggieTrunkUI.this.itemStorage.getItemList().get(buildableIndex2)).item.getName());
+                }
+ 
+                public void exit(InputEvent event, float x, float y, int pointer, Actor toActor) {
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/ui/CraftingUI.java src/main/java/com/cairn4/moonbase/ui/CraftingUI.java
+--- ../srcjar/decompiled-0.44.2/moonbase/ui/CraftingUI.java	2018-07-02 21:47:02.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/ui/CraftingUI.java	2018-07-03 12:32:26.186323499 +0200
+@@ -427,7 +427,7 @@ public class CraftingUI extends Popup im
+    }
+ 
+    private void updateGrid() {
+-      final int buildIndex;
++      int buildIndex;
+       for(buildIndex = 0; buildIndex < this.itemButtonList.size(); ++buildIndex) {
+          ItemButton i = (ItemButton)this.itemButtonList.get(buildIndex);
+          i.disable();
+@@ -436,16 +436,17 @@ public class CraftingUI extends Popup im
+       }
+ 
+       buildIndex = 0;
+-      final int buttonIndex = 0;
++      int buttonIndex = 0;
+ 
+       for(Iterator var3 = this.itemCrafter.buildables.iterator(); var3.hasNext(); ++buildIndex) {
+          String buildable = (String)var3.next();
+          if (this.unlockedBuildables.contains(buildable)) {
+             ItemButton i = (ItemButton)this.itemButtonList.get(buttonIndex);
+             i.clearListeners();
++            final int buttonIndex2 = buttonIndex, buildIndex2 = buildIndex;
+             i.addListener(new ClickListener() {
+                public void clicked(InputEvent event, float x, float y) {
+-                  CraftingUI.this.selectRecipie(buildIndex, buttonIndex);
++                  CraftingUI.this.selectRecipie(buildIndex2, buttonIndex2);
+                }
+             });
+             i.enable();
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/ui/DiscoveriesPopup.java src/main/java/com/cairn4/moonbase/ui/DiscoveriesPopup.java
+--- ../srcjar/decompiled-0.44.2/moonbase/ui/DiscoveriesPopup.java	2018-07-02 21:47:02.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/ui/DiscoveriesPopup.java	2018-07-03 12:32:26.390325397 +0200
+@@ -85,7 +85,7 @@ public class DiscoveriesPopup extends Po
+          icon.setTouchable(Touchable.enabled);
+          overlay.add(icon).pad(12.0F);
+          stack.add(overlay);
+-         final String toolTipText = Localization.get("item_researchObject" + i);
++         String toolTipText = Localization.get("item_researchObject" + i);
+          if (this.researchItemFound(i)) {
+             icon.setColor(Color.WHITE);
+          } else {
+@@ -93,9 +93,10 @@ public class DiscoveriesPopup extends Po
+             icon.setColor(0.0F, 0.0F, 0.0F, 0.25F);
+          }
+ 
++         final String toolTipText2 = toolTipText;
+          icon.addListener(new ClickListener() {
+             public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
+-               DiscoveriesPopup.this.createTooltip(toolTipText);
++               DiscoveriesPopup.this.createTooltip(toolTipText2);
+             }
+ 
+             public void exit(InputEvent event, float x, float y, int pointer, Actor toActor) {
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/ui/HudInventory.java src/main/java/com/cairn4/moonbase/ui/HudInventory.java
+--- ../srcjar/decompiled-0.44.2/moonbase/ui/HudInventory.java	2018-07-02 21:47:02.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/ui/HudInventory.java	2018-07-03 12:32:26.250324094 +0200
+@@ -74,7 +74,7 @@ public class HudInventory {
+       this.dragAndDrop.clear();
+       final PlayerInventory inventory = playerInventory;
+ 
+-      for(final int i = 0; i < this.itemButtonList.size(); ++i) {
++      for(int i = 0; i < this.itemButtonList.size(); ++i) {
+          final ItemButton ib = (ItemButton)this.itemButtonList.get(i);
+          ib.clearListeners();
+          if (playerInventory.itemList.size() > 0 && i == playerInventory.getSelectedIndex()) {
+@@ -96,9 +96,9 @@ public class HudInventory {
+             String iconName = ItemFactory.getItemSprite(((ItemStack)playerInventory.itemList.get(i)).getId());
+             ib.setIcon(iconName);
+             ib.setCount(((ItemStack)playerInventory.itemList.get(i)).getAmount());
+-            final String tooltipTextTemp = ((ItemStack)playerInventory.itemList.get(i)).getName();
++            String tooltipTextTemp = ((ItemStack)playerInventory.itemList.get(i)).getName();
+ 
+-            for(Iterator var8 = ((ItemStack)playerInventory.itemList.get(i)).item.actions.iterator(); var8.hasNext(); tooltipTextTemp = tooltipTextTemp + "RMB to use.") {
++            for(Iterator<ItemActions> var8 = ((ItemStack)playerInventory.itemList.get(i)).item.actions.iterator(); var8.hasNext(); tooltipTextTemp = tooltipTextTemp + "RMB to use.") {
+                ItemActions action = (ItemActions)var8.next();
+                tooltipTextTemp = tooltipTextTemp + "\n";
+             }
+@@ -109,14 +109,16 @@ public class HudInventory {
+             }
+ 
+             ib.button.setUserObject(i);
++            final String tooltipTextTemp2 = tooltipTextTemp;
++            final int i2 = i;
+             ib.addListener(new ClickListener(0) {
+                public void clicked(InputEvent event, float x, float y) {
+-                  inventory.setSelection(i);
++                  inventory.setSelection(i2);
+                   inventory.equipItem();
+                }
+ 
+                public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
+-                  HudInventory.this.hud.createTooltip(tooltipTextTemp);
++                  hud.createTooltip(tooltipTextTemp2);
+                }
+ 
+                public void exit(InputEvent event, float x, float y, int pointer, Actor toActor) {
+@@ -125,8 +127,8 @@ public class HudInventory {
+             });
+             ib.addListener(new ClickListener(1) {
+                public void clicked(InputEvent event, float x, float y) {
+-                  if (i != playerInventory.getSelectedIndex()) {
+-                     inventory.setSelection(i);
++                  if (i2 != playerInventory.getSelectedIndex()) {
++                     inventory.setSelection(i2);
+                      inventory.equipItem();
+                   }
+ 
+@@ -140,13 +142,13 @@ public class HudInventory {
+             this.dragAndDrop.addSource(new Source(ib.group) {
+                public Payload dragStart(InputEvent event, float x, float y, int pointer) {
+                   Payload payload = new Payload();
+-                  payload.setObject(i);
++                  payload.setObject(i2);
+                   Group payloadGroup = new Group();
+                   Image dragIcon = new Image(ib.icon.getDrawable());
+                   dragIcon.setSize(ib.icon.getWidth(), ib.icon.getHeight());
+                   payloadGroup.addActor(dragIcon);
+                   dragIcon.setPosition(5.0F, -5.0F, 1);
+-                  Label count = new Label(((ItemStack)inventory.getItemList().get(i)).getAmount() + "", HudInventory.this.hud.labelStyle);
++                  Label count = new Label(((ItemStack)inventory.getItemList().get(i2)).getAmount() + "", HudInventory.this.hud.labelStyle);
+                   count.setFontScale(0.45F);
+                   count.setWidth(100.0F);
+                   count.setAlignment(20);
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/ui/Hud.java src/main/java/com/cairn4/moonbase/ui/Hud.java
+--- ../srcjar/decompiled-0.44.2/moonbase/ui/Hud.java	2018-07-02 21:47:02.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/ui/Hud.java	2018-07-03 12:32:26.098322680 +0200
+@@ -897,7 +897,6 @@ public class Hud extends Menu implements
+    }
+ 
+    public void reorderStatusEffectPosition() {
+-      int x = false;
+ 
+       for(int i = 0; i < this.statusEffectUIList.size(); ++i) {
+          ((StatusEffectUI)this.statusEffectUIList.get(i)).setPosition((float)i * -50.0F - (float)i * 10.0F, 0.0F);
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/ui/InventoryUI.java src/main/java/com/cairn4/moonbase/ui/InventoryUI.java
+--- ../srcjar/decompiled-0.44.2/moonbase/ui/InventoryUI.java	2018-07-02 21:47:00.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/ui/InventoryUI.java	2018-07-03 12:32:26.230323909 +0200
+@@ -99,7 +99,7 @@ public class InventoryUI extends Popup {
+    }
+ 
+    private void updateGrid() {
+-      final int buildableIndex = 0;
++      int buildableIndex = 0;
+ 
+       for(int y = 0; y < 4; ++y) {
+          for(int x = 0; x < 3; ++x) {
+@@ -108,13 +108,14 @@ public class InventoryUI extends Popup {
+                b.enable();
+                b.setIcon(((ItemStack)this.playerInventory.getItemList().get(buildableIndex)).getSprite());
+                b.setCount(((ItemStack)this.playerInventory.getItemList().get(buildableIndex)).getAmount());
++               final int buildableIndex2 = buildableIndex;
+                b.addListener(new ClickListener() {
+                   public void clicked(InputEvent event, float x, float y) {
+-                     InventoryUI.this.selectItem(buildableIndex);
++                     InventoryUI.this.selectItem(buildableIndex2);
+                   }
+ 
+                   public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
+-                     InventoryUI.this.createTooltip(((ItemStack)InventoryUI.this.playerInventory.getItemList().get(buildableIndex)).getName());
++                     InventoryUI.this.createTooltip(((ItemStack)InventoryUI.this.playerInventory.getItemList().get(buildableIndex2)).getName());
+                   }
+ 
+                   public void exit(InputEvent event, float x, float y, int pointer, Actor toActor) {
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/ui/Menu.java src/main/java/com/cairn4/moonbase/ui/Menu.java
+--- ../srcjar/decompiled-0.44.2/moonbase/ui/Menu.java	2018-07-02 21:47:00.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/ui/Menu.java	2018-07-03 12:32:26.118322867 +0200
+@@ -35,7 +35,7 @@ public class Menu {
+       Viewport v = baseScreen.viewport;
+       this.stage = baseScreen.stage;
+       if (baseScreen instanceof GameScreen) {
+-         Viewport v = ((GameScreen)baseScreen).hudViewport;
++         v = ((GameScreen)baseScreen).hudViewport;
+          this.stage = ((GameScreen)baseScreen).hudStage;
+       }
+ 
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/ui/ResearchPopup.java src/main/java/com/cairn4/moonbase/ui/ResearchPopup.java
+--- ../srcjar/decompiled-0.44.2/moonbase/ui/ResearchPopup.java	2018-07-02 21:47:00.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/ui/ResearchPopup.java	2018-07-03 12:32:26.298324541 +0200
+@@ -161,7 +161,7 @@ public class ResearchPopup extends Popup
+    }
+ 
+    private void updateInventory() {
+-      final int buildableIndex = 0;
++      int buildableIndex = 0;
+ 
+       for(int y = 0; y < 4; ++y) {
+          for(int x = 0; x < 3; ++x) {
+@@ -182,13 +182,15 @@ public class ResearchPopup extends Popup
+                   b.setIconColor(disabledIconColor);
+                }
+ 
++               final int buildableIndex2 = buildableIndex;
++
+                b.addListener(new ClickListener() {
+                   public void clicked(InputEvent event, float x, float y) {
+-                     ResearchPopup.this.selectObject(buildableIndex);
++                     ResearchPopup.this.selectObject(buildableIndex2);
+                   }
+ 
+                   public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
+-                     ResearchPopup.this.createTooltip(((ItemStack)ResearchPopup.this.playerInventory.getItemList().get(buildableIndex)).getName());
++                     ResearchPopup.this.createTooltip(((ItemStack)ResearchPopup.this.playerInventory.getItemList().get(buildableIndex2)).getName());
+                   }
+ 
+                   public void exit(InputEvent event, float x, float y, int pointer, Actor toActor) {
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/ui/ResolutionPopup.java src/main/java/com/cairn4/moonbase/ui/ResolutionPopup.java
+--- ../srcjar/decompiled-0.44.2/moonbase/ui/ResolutionPopup.java	2018-07-02 21:47:00.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/ui/ResolutionPopup.java	2018-07-03 12:32:26.370325211 +0200
+@@ -72,7 +72,7 @@ public class ResolutionPopup extends Pop
+    private void addResolutionOptions() {
+       DisplayMode[] displayModes = Gdx.graphics.getDisplayModes(Gdx.graphics.getPrimaryMonitor());
+ 
+-      for(final int i = 0; i < displayModes.length; ++i) {
++      for(int i = 0; i < displayModes.length; ++i) {
+          TextButtonStyle style = this.baseScreen.altTextBtnStyle;
+          if (i == SettingsLoader.getInstance().settingsData.DISPLAY_MODE) {
+             style = this.baseScreen.textBtnStyle;
+@@ -81,11 +81,12 @@ public class ResolutionPopup extends Pop
+          TextButton btnResolution = new TextButton(displayModes[i].width + "x" + displayModes[i].height + " - " + displayModes[i].refreshRate + "Hz", style);
+          btnResolution.setChecked(true);
+          btnResolution.getLabel().setFontScale(0.4F);
++         final int i2 = i;
+          btnResolution.addListener(new ClickListener() {
+             public void clicked(InputEvent e, float x, float y) {
+-               Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayModes(Gdx.graphics.getPrimaryMonitor())[i]);
++               Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayModes(Gdx.graphics.getPrimaryMonitor())[i2]);
+                ResolutionPopup.this.baseScreen.showMenu(new ConfirmSettingsPopup(ResolutionPopup.this.baseScreen, ResolutionPopup.this));
+-               ResolutionPopup.this.selectedDisplayMode = i;
++               ResolutionPopup.this.selectedDisplayMode = i2;
+             }
+          });
+          this.table.add(btnResolution).height(70.0F).width(300.0F);
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/ui/StorageUI.java src/main/java/com/cairn4/moonbase/ui/StorageUI.java
+--- ../srcjar/decompiled-0.44.2/moonbase/ui/StorageUI.java	2018-07-02 21:47:00.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/ui/StorageUI.java	2018-07-03 12:32:26.170323350 +0200
+@@ -106,7 +106,7 @@ public class StorageUI extends Popup {
+    }
+ 
+    private void updateGrid() {
+-      final int buildableIndex = 0;
++      int buildableIndex = 0;
+ 
+       int s;
+       for(s = 0; s < 4; ++s) {
+@@ -118,18 +118,19 @@ public class StorageUI extends Popup {
+                b.setIcon(ItemFactory.getItemSprite(id));
+                b.setCount(((ItemStack)this.playerInventory.getItemList().get(buildableIndex)).getAmount());
+                b.clearListeners();
++               final int buildableIndex2 = buildableIndex;
+                b.addListener(new ClickListener() {
+                   public void clicked(InputEvent event, float x, float y) {
+                      if (!Gdx.input.isKeyPressed(59) && !Gdx.input.isKeyPressed(60)) {
+-                        StorageUI.this.moveToStorage(buildableIndex, false);
++                        StorageUI.this.moveToStorage(buildableIndex2, false);
+                      } else {
+-                        StorageUI.this.moveToStorage(buildableIndex, true);
++                        StorageUI.this.moveToStorage(buildableIndex2, true);
+                      }
+ 
+                   }
+ 
+                   public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
+-                     StorageUI.this.createTooltip(((ItemStack)StorageUI.this.playerInventory.getItemList().get(buildableIndex)).item.getName());
++                     StorageUI.this.createTooltip(((ItemStack)StorageUI.this.playerInventory.getItemList().get(buildableIndex2)).item.getName());
+                   }
+ 
+                   public void exit(InputEvent event, float x, float y, int pointer, Actor toActor) {
+@@ -156,18 +157,19 @@ public class StorageUI extends Popup {
+             b.enable();
+             b.setIcon(((ItemStack)this.itemStorageBehavior.getItemList().get(buildableIndex)).item.getSprite());
+             b.setCount(((ItemStack)this.itemStorageBehavior.getItemList().get(buildableIndex)).getAmount());
++            final int buildableIndex2 = buildableIndex;
+             b.addListener(new ClickListener() {
+                public void clicked(InputEvent event, float x, float y) {
+                   if (!Gdx.input.isKeyPressed(59) && !Gdx.input.isKeyPressed(60)) {
+-                     StorageUI.this.moveToInventory(buildableIndex, false);
++                     StorageUI.this.moveToInventory(buildableIndex2, false);
+                   } else {
+-                     StorageUI.this.moveToInventory(buildableIndex, true);
++                     StorageUI.this.moveToInventory(buildableIndex2, true);
+                   }
+ 
+                }
+ 
+                public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
+-                  StorageUI.this.createTooltip(((ItemStack)StorageUI.this.itemStorageBehavior.getItemList().get(buildableIndex)).item.getName());
++                  StorageUI.this.createTooltip(((ItemStack)StorageUI.this.itemStorageBehavior.getItemList().get(buildableIndex2)).item.getName());
+                }
+ 
+                public void exit(InputEvent event, float x, float y, int pointer, Actor toActor) {
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/ui/TechTreePopup.java src/main/java/com/cairn4/moonbase/ui/TechTreePopup.java
+--- ../srcjar/decompiled-0.44.2/moonbase/ui/TechTreePopup.java	2018-07-02 21:47:00.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/ui/TechTreePopup.java	2018-07-03 12:32:26.314324691 +0200
+@@ -515,7 +515,7 @@ public class TechTreePopup extends Popup
+          icon.setTouchable(Touchable.enabled);
+          overlay.add(icon).pad(3.0F);
+          stack.add(overlay);
+-         final String toolTipText = Localization.get("item_researchObject" + i);
++         String toolTipText = Localization.get("item_researchObject" + i);
+          if (this.researchItemFound(i)) {
+             icon.setColor(Color.WHITE);
+          } else {
+@@ -523,9 +523,11 @@ public class TechTreePopup extends Popup
+             icon.setColor(0.0F, 0.0F, 0.0F, 0.5F);
+          }
+ 
++         final String toolTipText2 = toolTipText;
++
+          icon.addListener(new ClickListener() {
+             public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
+-               TechTreePopup.this.createTooltip(toolTipText);
++               TechTreePopup.this.createTooltip(toolTipText2);
+             }
+ 
+             public void exit(InputEvent event, float x, float y, int pointer, Actor toActor) {
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/WeatherManager.java src/main/java/com/cairn4/moonbase/WeatherManager.java
+--- ../srcjar/decompiled-0.44.2/moonbase/WeatherManager.java	2018-07-02 21:47:06.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/WeatherManager.java	2018-07-03 12:32:27.334334180 +0200
+@@ -1,5 +1,6 @@
+ package com.cairn4.moonbase;
+ 
++import com.badlogic.gdx.Application;
+ import com.badlogic.gdx.Gdx;
+ import com.badlogic.gdx.audio.Sound;
+ import com.badlogic.gdx.files.FileHandle;
+@@ -97,6 +98,7 @@ public class WeatherManager {
+          Json json = new Json();
+          String fileText = this.fileHandle.readString();
+          this.weatherDataList = ((WeatherDataList)json.fromJson(WeatherDataList.class, fileText)).weatherDataList;
++
+          Gdx.app.debug("MewnBase", "WeatherManager: list size: " + this.weatherDataList.size());
+       }
+ 
+@@ -239,7 +241,6 @@ public class WeatherManager {
+          float r = MathUtils.random(0.0F, max);
+          float baseR = 0.0F;
+ 
+-         WeatherData w;
+          for(Iterator var4 = this.weatherDataList.iterator(); var4.hasNext(); baseR += w.chance) {
+             w = (WeatherData)var4.next();
+             if (r <= w.chance + baseR) {
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/worlddata/ItemDropperData.java src/main/java/com/cairn4/moonbase/worlddata/ItemDropperData.java
+--- ../srcjar/decompiled-0.44.2/moonbase/worlddata/ItemDropperData.java	2018-07-02 21:46:58.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/worlddata/ItemDropperData.java	2018-07-03 12:32:27.082331836 +0200
+@@ -1,6 +1,8 @@
+ package com.cairn4.moonbase.worlddata;
+ 
+ import com.badlogic.gdx.graphics.Color;
++import com.cairn4.moonbase.Item;
++
+ import java.util.ArrayList;
+ 
+ public class ItemDropperData {
+@@ -8,7 +10,7 @@ public class ItemDropperData {
+    public boolean naturallyOccurring;
+    public float noiseFeature;
+    public float noiseSmooth;
+-   public ArrayList spawnBiomes = new ArrayList();
++   public ArrayList<ItemDropperSpawnBiome> spawnBiomes = new ArrayList();
+    public boolean zSort;
+    public ArrayList sprites;
+    public ArrayList regrowSprites;
+@@ -26,6 +28,6 @@ public class ItemDropperData {
+    public float interactDuration;
+    public int minDrop;
+    public int maxDrop;
+-   public ArrayList itemList = new ArrayList();
+-   public ArrayList guaranteedDrops = new ArrayList();
++   public ArrayList<ItemDropperItemData> itemList = new ArrayList();
++   public ArrayList<InventoryItemData> guaranteedDrops = new ArrayList();
+ }
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/worlddata/ItemDropperFactory.java src/main/java/com/cairn4/moonbase/worlddata/ItemDropperFactory.java
+--- ../srcjar/decompiled-0.44.2/moonbase/worlddata/ItemDropperFactory.java	2018-07-02 21:46:58.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/worlddata/ItemDropperFactory.java	2018-07-03 12:32:27.102332022 +0200
+@@ -13,7 +13,7 @@ import java.util.Iterator;
+ public class ItemDropperFactory {
+    private static ItemDropperFactory instance;
+    private FileHandle file;
+-   public ArrayList itemDropperDataList = new ArrayList();
++   public ArrayList<ItemDropperData> itemDropperDataList = new ArrayList();
+ 
+    private ItemDropperFactory() {
+       this.load();
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/worlddata/ItemDropperSet.java src/main/java/com/cairn4/moonbase/worlddata/ItemDropperSet.java
+--- ../srcjar/decompiled-0.44.2/moonbase/worlddata/ItemDropperSet.java	2018-07-02 21:46:58.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/worlddata/ItemDropperSet.java	2018-07-03 12:32:27.078331798 +0200
+@@ -3,5 +3,5 @@ package com.cairn4.moonbase.worlddata;
+ import java.util.ArrayList;
+ 
+ public class ItemDropperSet {
+-   public ArrayList itemDropperList = new ArrayList();
++   public ArrayList<ItemDropperData> itemDropperList = new ArrayList();
+ }
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/worlddata/SuitUpgradeData.java src/main/java/com/cairn4/moonbase/worlddata/SuitUpgradeData.java
+--- ../srcjar/decompiled-0.44.2/moonbase/worlddata/SuitUpgradeData.java	2018-07-02 21:46:58.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/worlddata/SuitUpgradeData.java	2018-07-03 12:32:27.086331872 +0200
+@@ -3,5 +3,5 @@ package com.cairn4.moonbase.worlddata;
+ import java.util.ArrayList;
+ 
+ public class SuitUpgradeData {
+-   public ArrayList suitLevels;
++   public ArrayList<SuitLevel> suitLevels;
+ }
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/worlddata/WeatherDataList.java src/main/java/com/cairn4/moonbase/worlddata/WeatherDataList.java
+--- ../srcjar/decompiled-0.44.2/moonbase/worlddata/WeatherDataList.java	2018-07-02 21:46:58.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/worlddata/WeatherDataList.java	2018-07-03 12:32:27.090331910 +0200
+@@ -3,5 +3,5 @@ package com.cairn4.moonbase.worlddata;
+ import java.util.ArrayList;
+ 
+ public class WeatherDataList {
+-   public ArrayList weatherDataList = new ArrayList();
++   public ArrayList<WeatherData> weatherDataList = new ArrayList();
+ }
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/World.java src/main/java/com/cairn4/moonbase/World.java
+--- ../srcjar/decompiled-0.44.2/moonbase/World.java	2018-07-02 21:47:06.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/World.java	2018-07-03 12:32:27.134332319 +0200
+@@ -1,7 +1,7 @@
+ package com.cairn4.moonbase;
+ 
+ import box2dLight.RayHandler;
+-import com.aurelienribon.bodyeditor.BodyEditorLoader;
++import aurelienribon.bodyeditor.BodyEditorLoader;
+ import com.badlogic.gdx.Gdx;
+ import com.badlogic.gdx.audio.Sound;
+ import com.badlogic.gdx.graphics.Color;
+diff -rupbw --strip-trailing-cr ../srcjar/decompiled-0.44.2/moonbase/ZSortComparator.java src/main/java/com/cairn4/moonbase/ZSortComparator.java
+--- ../srcjar/decompiled-0.44.2/moonbase/ZSortComparator.java	2018-07-02 21:47:06.000000000 +0200
++++ src/main/java/com/cairn4/moonbase/ZSortComparator.java	2018-07-03 12:32:27.358334404 +0200
+@@ -3,7 +3,7 @@ package com.cairn4.moonbase;
+ import com.badlogic.gdx.scenes.scene2d.Actor;
+ import java.util.Comparator;
+ 
+-public class ZSortComparator implements Comparator {
++public class ZSortComparator implements Comparator<Actor> {
+    public int compare(Actor a1, Actor a2) {
+       if (a1 != null && a1.getUserObject() != null && a1.getUserObject() instanceof Float && a2 != null && a2.getUserObject() != null && a2.getUserObject() instanceof Float) {
+          float z1 = (Float)a1.getUserObject();
