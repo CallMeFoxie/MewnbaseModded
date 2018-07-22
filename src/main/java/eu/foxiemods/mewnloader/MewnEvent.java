@@ -11,6 +11,12 @@ public class MewnEvent {
       return eventName;
    }
 
+   public static void registerEvents() {
+      MewnEventBus.registerEvent("itemsLoaded", ItemsLoaded.class);
+      MewnEventBus.registerEvent("gameTickPre", GameTickPre.class);
+      MewnEventBus.registerEvent("gameTickPost", GameTickPost.class);
+   }
+
    public static class ItemsLoaded extends MewnEvent {
       public ItemsLoaded() {
          super("itemsLoaded");

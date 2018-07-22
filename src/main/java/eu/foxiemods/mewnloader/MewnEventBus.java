@@ -22,9 +22,15 @@ public class MewnEventBus {
    }
 
    private static HashMap<String, List<MewnEventer>> eventMethods;
+   private static HashMap<Class<? extends MewnEvent>, String> events;
 
    static {
       eventMethods = new HashMap<>();
+      events = new HashMap<>();
+   }
+
+   public static void registerEvent(String event, Class<? extends MewnEvent> clazz) {
+      events.put(clazz, event);
    }
 
    static void fireEvent(MewnEvent event) {
@@ -56,9 +62,8 @@ public class MewnEventBus {
    public static void registerEventHandlers(MewnMod mod, Object object) {
       Method methods[] = object.getClass().getMethods();
       for (Method method : methods) {
-         if(method.isAnnotationPresent(MewnEventRegister.class)) {
-            MewnEventRegister register = method.getAnnotation(MewnEventRegister.class);
-            registerEventHandler(mod, object, method, register.eventName());
+         if(method.getParameterCount() == 1 && events.containsKey(method.getParameterTypes()[0])) {
+            registerEventHandler(mod, object, method, events.get(method.getParameterTypes()[0]));
          }
       }
    }

@@ -52,6 +52,7 @@ public class MewnLoader extends URLClassLoader {
          MewnMods.add(mod);
       }
 
+      MewnEvent.registerEvents();
       modPreinit();
    }
 
