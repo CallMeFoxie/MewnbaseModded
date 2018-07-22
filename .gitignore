@@ -1,5 +1,4 @@
-src/main/java/com/cairn4/
-src/main/resources/
 build/
 .gradle/
 **.swp
+src/game/

@@ -59,10 +59,12 @@ sourceSets {
                        'src/extra/libgdx-contribs/utils/src/main/java/',
                        'src/extra/jMapGen/src/',
                        'src/extra/jlibnoise/src/main/java/',
-                       'src/extra/box2d-editor/loader-libgdx/src']
+                       'src/extra/box2d-editor/loader-libgdx/src',
+                       'src/game/java']
         }
         resources {
-            srcDirs = ['src/main/resources']
+            srcDirs = ['src/game/resources',
+                       'src/main/java']
         }
     }
 }
