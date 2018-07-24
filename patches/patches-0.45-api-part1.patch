@@ -1,0 +1,124 @@
+diff -rupb ../../../../../recompiled-0.45/moonbase/desktop/DesktopLauncher.java ./moonbase/desktop/DesktopLauncher.java
+--- ../../../../../recompiled-0.45/moonbase/desktop/DesktopLauncher.java	2018-07-23 20:52:15.747527100 +0200
++++ ./moonbase/desktop/DesktopLauncher.java	2018-07-24 18:12:25.963796100 +0200
+@@ -1,8 +1,6 @@
+ package com.cairn4.moonbase.desktop;
+ 
+-import com.badlogic.gdx.Application;
+ import com.badlogic.gdx.Files.FileType;
+-import com.badlogic.gdx.Gdx;
+ import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
+ import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
+ import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration.HdpiMode;
+diff -rupb ../../../../../recompiled-0.45/moonbase/MoonBase.java ./moonbase/MoonBase.java
+--- ../../../../../recompiled-0.45/moonbase/MoonBase.java	2018-07-23 20:52:15.790513100 +0200
++++ ./moonbase/MoonBase.java	2018-07-24 18:12:25.990793400 +0200
+@@ -16,6 +16,7 @@ import com.badlogic.gdx.graphics.g2d.Par
+ import com.badlogic.gdx.graphics.g2d.TextureAtlas;
+ import com.cairn4.moonbase.ui.Splash;
+ import com.strongjoshua.console.Console;
++import eu.foxiemods.mewnloader.MewnLoader;
+ 
+ public class MoonBase extends Game {
+    public static final int SAVE_DATA_VERSION = 5;
+@@ -59,6 +60,8 @@ public class MoonBase extends Game {
+       Gdx.gl.glClearColor(this.clearColor.r, this.clearColor.g, this.clearColor.b, this.clearColor.a);
+       SettingsLoader.getInstance();
+       this.loadDisplaySetings();
++      Gdx.app.setLogLevel(Application.LOG_DEBUG);
++      MewnLoader.init();
+       AssetManagerSingleton.getInstance().load("smallfont1.fnt", BitmapFont.class);
+       AssetManagerSingleton.getInstance().load("headingfont1.fnt", BitmapFont.class);
+       AssetManagerSingleton.getInstance().load("menu.atlas", TextureAtlas.class);
+@@ -89,7 +92,7 @@ public class MoonBase extends Game {
+ 
+       String os = System.getProperty("os.name");
+       Gdx.app.log("MewnBase", os);
+-      Gdx.app.setLogLevel(Application.LOG_DEBUG);
++
+       if (os.toLowerCase().indexOf("mac") >= 0) {
+          DISCORD_ON = false;
+       }
+diff -rupb ../../../../../recompiled-0.45/moonbase/TerrainGen.java ./moonbase/TerrainGen.java
+--- ../../../../../recompiled-0.45/moonbase/TerrainGen.java	2018-07-23 20:52:15.804508600 +0200
++++ ./moonbase/TerrainGen.java	2018-07-24 18:12:25.997793400 +0200
+@@ -13,7 +13,6 @@ import java.util.Iterator;
+ import java.util.List;
+ 
+ import jMapGen.Point;
+-import za.co.luma.geom.Vector2DDouble;
+ import za.co.luma.math.sampling.Sampler;
+ import za.co.luma.math.sampling.UniformPoissonDiskSampler;
+ 
+diff -rupb ../../../../../recompiled-0.45/moonbase/WeatherManager.java ./moonbase/WeatherManager.java
+--- ../../../../../recompiled-0.45/moonbase/WeatherManager.java	2018-07-23 20:52:15.898478700 +0200
++++ ./moonbase/WeatherManager.java	2018-07-24 18:12:26.019789700 +0200
+@@ -1,6 +1,5 @@
+ package com.cairn4.moonbase;
+ 
+-import com.badlogic.gdx.Application;
+ import com.badlogic.gdx.Gdx;
+ import com.badlogic.gdx.audio.Sound;
+ import com.badlogic.gdx.files.FileHandle;
+diff -rupb ../../../../../recompiled-0.45/moonbase/World.java ./moonbase/World.java
+--- ../../../../../recompiled-0.45/moonbase/World.java	2018-07-23 21:12:53.244395600 +0200
++++ ./moonbase/World.java	2018-07-24 18:12:26.028789400 +0200
+@@ -1,7 +1,7 @@
+ package com.cairn4.moonbase;
+ 
+-import box2dLight.RayHandler;
+ import aurelienribon.bodyeditor.BodyEditorLoader;
++import box2dLight.RayHandler;
+ import com.badlogic.gdx.Gdx;
+ import com.badlogic.gdx.audio.Sound;
+ import com.badlogic.gdx.graphics.Color;
+@@ -11,28 +11,14 @@ import com.badlogic.gdx.math.Vector2;
+ import com.badlogic.gdx.utils.Pool;
+ import com.badlogic.gdx.utils.Pools;
+ import com.cairn4.moonbase.techtree.TechManager;
+-import com.cairn4.moonbase.tiles.AirCleaner;
+-import com.cairn4.moonbase.tiles.Airlock;
+-import com.cairn4.moonbase.tiles.BaseModule;
+-import com.cairn4.moonbase.tiles.CraftingStation;
+-import com.cairn4.moonbase.tiles.GroundTile;
+-import com.cairn4.moonbase.tiles.HabitatModule;
+-import com.cairn4.moonbase.tiles.Lander;
+-import com.cairn4.moonbase.tiles.SolarPanel;
+-import com.cairn4.moonbase.tiles.Tile;
++import com.cairn4.moonbase.tiles.*;
+ import com.cairn4.moonbase.ui.GameScreen;
+ import com.cairn4.moonbase.ui.MainMenu;
+ import com.cairn4.moonbase.ui.PausePopup;
+-import com.cairn4.moonbase.worlddata.ChunkLoader;
+-import com.cairn4.moonbase.worlddata.ItemDropperData;
+-import com.cairn4.moonbase.worlddata.ItemDropperFactory;
+-import com.cairn4.moonbase.worlddata.ItemDropperSpawnBiome;
+-import com.cairn4.moonbase.worlddata.WeatherData;
+-import java.util.ArrayList;
+-import java.util.HashMap;
+-import java.util.Iterator;
+-import java.util.Timer;
+-import java.util.TimerTask;
++import com.cairn4.moonbase.worlddata.*;
++import eu.foxiemods.mewnloader.MewnEvent;
++
++import java.util.*;
+ import java.util.Map.Entry;
+ 
+ public class World {
+@@ -208,6 +194,7 @@ public class World {
+          this.updatePlayerSpine(delta);
+          break;
+       case playing:
++         MewnEvent.GameTickPre.fire();
+          this.gameScreen.physicsCounter.start();
+          this.baseManager.update(delta);
+          this.regrowthManager.update(delta);
+@@ -235,6 +222,7 @@ public class World {
+          }
+ 
+          this.updateChunks(delta);
++         MewnEvent.GameTickPost.fire();
+       case paused:
+       default:
+          break;
