@@ -1,6 +1,12 @@
 package eu.foxiemods.mewnloader;
 
+import com.badlogic.gdx.Gdx;
+import eu.foxiemods.mewnloader.tools.ItemsLoader;
+
 import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -9,7 +15,7 @@ import java.util.ServiceLoader;
 
 public class MewnLoader extends URLClassLoader {
 
-   private static ArrayList<MewnMod> MewnMods;
+   public static ArrayList<MewnMod> MewnMods;
 
    public MewnLoader(URL[] urls) {
       super(urls);
@@ -37,16 +43,33 @@ public class MewnLoader extends URLClassLoader {
 
       MewnMods = new ArrayList<>();
 
-      URLClassLoader currentLoader = (URLClassLoader)ClassLoader.getSystemClassLoader();
-      MewnLoader l = new MewnLoader(currentLoader.getURLs());
+      URLClassLoader systemClassLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();
+      Class<URLClassLoader> classLoaderClass = URLClassLoader.class;
+      Method method = null;
+      try {
+         method = classLoaderClass.getDeclaredMethod("addURL", new Class[]{URL.class});
+         method.setAccessible(true);
+      } catch (NoSuchMethodException e) {
+         e.printStackTrace();
+         Gdx.app.exit();
+      }
+
 
       for(File file : files) {
          if(file.isFile() && file.getName().endsWith(".jar")) {
-            l.addFile(file);
+            try {
+               method.invoke(systemClassLoader, new Object[] {file.toURI().toURL()});
+            } catch (MalformedURLException e) {
+               e.printStackTrace();
+            } catch (IllegalAccessException e) {
+               e.printStackTrace();
+            } catch (InvocationTargetException e) {
+               e.printStackTrace();
+            }
          }
       }
 
-      ServiceLoader<MewnMod> sloader = ServiceLoader.load(MewnMod.class, l);
+      ServiceLoader<MewnMod> sloader = ServiceLoader.load(MewnMod.class, systemClassLoader);
       for (MewnMod mod : sloader) {
          System.out.println("Loaded mod: " + mod.getModName());
          MewnMods.add(mod);
@@ -59,6 +82,14 @@ public class MewnLoader extends URLClassLoader {
    public static void modPreinit() {
       for(MewnMod mod : MewnMods) {
          mod.preinit();
+      }
+
+      // load all the item files
+
+      try {
+         ItemsLoader.LoadItems();
+      } catch (IOException e) {
+         e.printStackTrace();
       }
    }
 
