@@ -15,15 +15,16 @@ repositories {
 
 ext {
     gdxVersion = "1.9.8"
+    gameVersion = "0.45"
 }
 
 buildscript {
-  repositories {
-    jcenter()
-  }
-  dependencies {
-    classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.4'
-  }
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.4'
+    }
 }
 
 dependencies {
@@ -71,9 +72,24 @@ sourceSets {
 }
 
 jar {
-  manifest {
-    attributes(
-      'Main-Class': 'com.cairn4.moonbase.desktop.DesktopLauncher'
-    )
-  }
+    manifest {
+        attributes(
+                'Main-Class': 'com.cairn4.moonbase.desktop.DesktopLauncher'
+        )
+    }
+}
+
+task diffBaseGame(type: Exec) {
+    workingDir '.'
+
+    commandLine 'diff', '-rupb', 'recompiled-0.45', 'src/game/java/com/cairn4'
+
+    ignoreExitValue = true
+
+    standardOutput = new ByteArrayOutputStream()
+
+    doLast {
+        def theOutput = standardOutput.toString()
+        new File("$projectDir/patches/patches-$gameVersion-api.patch").text = theOutput
+    }
 }
