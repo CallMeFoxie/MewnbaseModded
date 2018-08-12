@@ -4,7 +4,6 @@ import com.badlogic.gdx.Gdx;
 import eu.foxiemods.mewnloader.tools.ItemsLoader;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -80,16 +79,9 @@ public class MewnLoader extends URLClassLoader {
    }
 
    public static void modPreinit() {
+      ItemsLoader.LoadItems();
       for(MewnMod mod : MewnMods) {
          mod.preinit();
-      }
-
-      // load all the item files
-
-      try {
-         ItemsLoader.LoadItems();
-      } catch (IOException e) {
-         e.printStackTrace();
       }
    }
 

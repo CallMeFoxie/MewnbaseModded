@@ -1,0 +1,403 @@
+diff -rupb recompiled-0.45/moonbase/desktop/DesktopLauncher.java src/game/java/com/cairn4/moonbase/desktop/DesktopLauncher.java
+--- recompiled-0.45/moonbase/desktop/DesktopLauncher.java	2018-07-23 20:52:15.747527100 +0200
++++ src/game/java/com/cairn4/moonbase/desktop/DesktopLauncher.java	2018-07-24 18:12:25.963796100 +0200
+@@ -1,8 +1,6 @@
+ package com.cairn4.moonbase.desktop;
+ 
+-import com.badlogic.gdx.Application;
+ import com.badlogic.gdx.Files.FileType;
+-import com.badlogic.gdx.Gdx;
+ import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
+ import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
+ import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration.HdpiMode;
+diff -rupb recompiled-0.45/moonbase/ItemData.java src/game/java/com/cairn4/moonbase/ItemData.java
+--- recompiled-0.45/moonbase/ItemData.java	2018-07-23 20:52:15.761523600 +0200
++++ src/game/java/com/cairn4/moonbase/ItemData.java	2018-08-12 11:18:27.379786500 +0200
+@@ -20,6 +20,8 @@ public class ItemData {
+    public ArrayList<InventoryItemData> craftingBonusItems = new ArrayList();
+    public String techReq;
+    public int researchPoints;
++   public String modId;
++   public String craftedIn;
+    /** @deprecated */
+    @Deprecated
+    public float pickupTime;
+diff -rupb recompiled-0.45/moonbase/ItemFactory.java src/game/java/com/cairn4/moonbase/ItemFactory.java
+--- recompiled-0.45/moonbase/ItemFactory.java	2018-07-23 20:52:15.775519100 +0200
++++ src/game/java/com/cairn4/moonbase/ItemFactory.java	2018-08-12 13:01:52.356256900 +0200
+@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
+ import com.badlogic.gdx.files.FileHandle;
+ import com.badlogic.gdx.utils.Json;
+ import com.cairn4.moonbase.worlddata.InventoryItemData;
++import eu.foxiemods.mewnloader.tools.ItemsLoader;
+ 
+ import java.util.ArrayList;
+ import java.util.Iterator;
+@@ -31,6 +32,7 @@ public class ItemFactory {
+          ItemDataSet itemDataSet = (ItemDataSet)json.fromJson(ItemDataSet.class, fileText);
+          ITEMDATALIST = itemDataSet.itemDataList;
+          Gdx.app.debug("MoonBase", "ItemFactory: list size: " + itemDataSet.itemDataList.size());
++         ITEMDATALIST.addAll(ItemsLoader.ITEMDATALIST);
+       }
+ 
+    }
+diff -rupb recompiled-0.45/moonbase/MoonBase.java src/game/java/com/cairn4/moonbase/MoonBase.java
+--- recompiled-0.45/moonbase/MoonBase.java	2018-07-23 20:52:15.790513100 +0200
++++ src/game/java/com/cairn4/moonbase/MoonBase.java	2018-07-24 18:12:25.990793400 +0200
+@@ -16,6 +16,7 @@ import com.badlogic.gdx.graphics.g2d.Par
+ import com.badlogic.gdx.graphics.g2d.TextureAtlas;
+ import com.cairn4.moonbase.ui.Splash;
+ import com.strongjoshua.console.Console;
++import eu.foxiemods.mewnloader.MewnLoader;
+ 
+ public class MoonBase extends Game {
+    public static final int SAVE_DATA_VERSION = 5;
+@@ -59,6 +60,8 @@ public class MoonBase extends Game {
+       Gdx.gl.glClearColor(this.clearColor.r, this.clearColor.g, this.clearColor.b, this.clearColor.a);
+       SettingsLoader.getInstance();
+       this.loadDisplaySetings();
++      Gdx.app.setLogLevel(Application.LOG_DEBUG);
++      MewnLoader.init();
+       AssetManagerSingleton.getInstance().load("smallfont1.fnt", BitmapFont.class);
+       AssetManagerSingleton.getInstance().load("headingfont1.fnt", BitmapFont.class);
+       AssetManagerSingleton.getInstance().load("menu.atlas", TextureAtlas.class);
+@@ -89,7 +92,7 @@ public class MoonBase extends Game {
+ 
+       String os = System.getProperty("os.name");
+       Gdx.app.log("MewnBase", os);
+-      Gdx.app.setLogLevel(Application.LOG_DEBUG);
++
+       if (os.toLowerCase().indexOf("mac") >= 0) {
+          DISCORD_ON = false;
+       }
+diff -rupb recompiled-0.45/moonbase/TerrainGen.java src/game/java/com/cairn4/moonbase/TerrainGen.java
+--- recompiled-0.45/moonbase/TerrainGen.java	2018-07-23 20:52:15.804508600 +0200
++++ src/game/java/com/cairn4/moonbase/TerrainGen.java	2018-07-24 18:12:25.997793400 +0200
+@@ -13,7 +13,6 @@ import java.util.Iterator;
+ import java.util.List;
+ 
+ import jMapGen.Point;
+-import za.co.luma.geom.Vector2DDouble;
+ import za.co.luma.math.sampling.Sampler;
+ import za.co.luma.math.sampling.UniformPoissonDiskSampler;
+ 
+diff -rupb recompiled-0.45/moonbase/tiles/behaviors/GarageCrafter.java src/game/java/com/cairn4/moonbase/tiles/behaviors/GarageCrafter.java
+--- recompiled-0.45/moonbase/tiles/behaviors/GarageCrafter.java	2018-07-23 20:47:14.243339000 +0200
++++ src/game/java/com/cairn4/moonbase/tiles/behaviors/GarageCrafter.java	2018-08-12 11:16:04.797643200 +0200
+@@ -10,6 +10,10 @@ public class GarageCrafter extends ItemC
+    int localX;
+    int localY;
+ 
++   public GarageCrafter() {
++      super("garage");
++   }
++
+    public void finishedBuilding() {
+       Gdx.app.log("MewnBase", "GarageCrafter: Done building " + this.getCurrentBuildItem().getName());
+       this.building = false;
+diff -rupb recompiled-0.45/moonbase/tiles/behaviors/GreenHouseItemCrafter.java src/game/java/com/cairn4/moonbase/tiles/behaviors/GreenHouseItemCrafter.java
+--- recompiled-0.45/moonbase/tiles/behaviors/GreenHouseItemCrafter.java	2018-07-23 20:47:14.233341100 +0200
++++ src/game/java/com/cairn4/moonbase/tiles/behaviors/GreenHouseItemCrafter.java	2018-08-12 11:16:04.630696500 +0200
+@@ -5,25 +5,30 @@ import com.cairn4.moonbase.ItemFactory;
+ import com.cairn4.moonbase.ItemPickup;
+ import com.cairn4.moonbase.ItemStack;
+ import com.cairn4.moonbase.worlddata.InventoryItemData;
++
+ import java.util.ArrayList;
+ import java.util.Iterator;
+ 
+ public class GreenHouseItemCrafter extends ItemCrafter {
++   public GreenHouseItemCrafter() {
++      super("greenhouse");
++   }
++
+    protected boolean hasBaseRequirementsForBuilding() {
+       return this.baseModule.isWatered() && this.baseModule.hasAir && this.baseModule.hasPower;
+    }
+ 
+    public boolean collectItem() {
+-      ItemStack i = (ItemStack)this.itemsToCollect.get(0);
++      ItemStack i = (ItemStack) this.itemsToCollect.get(0);
+       boolean collected = super.collectItem();
+       if (collected) {
+          ArrayList bonusItemList = ItemFactory.getInstance().getCraftingBonus(i.getId());
+          Iterator var4 = bonusItemList.iterator();
+ 
+-         while(var4.hasNext()) {
+-            InventoryItemData iid = (InventoryItemData)var4.next();
++         while (var4.hasNext()) {
++            InventoryItemData iid = (InventoryItemData) var4.next();
+ 
+-            for(int count = 0; count < iid.amount; ++count) {
++            for (int count = 0; count < iid.amount; ++count) {
+                Item newItem = ItemFactory.getInstance().createItem(iid.itemId);
+                new ItemPickup(this.baseModule.world, this.baseModule.chunk, this.baseModule.getWorldXPos(), this.baseModule.getWorldYPos(), newItem);
+             }
+diff -rupb recompiled-0.45/moonbase/tiles/behaviors/ItemCrafter.java src/game/java/com/cairn4/moonbase/tiles/behaviors/ItemCrafter.java
+--- recompiled-0.45/moonbase/tiles/behaviors/ItemCrafter.java	2018-07-23 21:12:29.980757800 +0200
++++ src/game/java/com/cairn4/moonbase/tiles/behaviors/ItemCrafter.java	2018-08-12 11:13:49.890648300 +0200
+@@ -17,6 +17,8 @@ import com.cairn4.moonbase.World;
+ import com.cairn4.moonbase.tiles.BaseModule;
+ import com.cairn4.moonbase.ui.Localization;
+ import com.cairn4.moonbase.worlddata.BehaviorData;
++import eu.foxiemods.mewnloader.CraftingRegistry;
++
+ import java.util.ArrayList;
+ import java.util.Iterator;
+ import java.util.Observable;
+@@ -27,7 +29,7 @@ public class ItemCrafter extends Observa
+    public boolean requirePowerToCraft;
+    public boolean requireOxygenToCraft;
+    public boolean requireWaterToCraft;
+-   public ArrayList<String> buildables = new ArrayList();
++   public CraftingRegistry registry;
+    public boolean building;
+    public Array<ItemStack> itemsToCollect = new Array();
+    public Player player;
+@@ -39,6 +41,10 @@ public class ItemCrafter extends Observa
+    private Image buildFinishedIcon;
+    public String lastSelectedItemId = "";
+ 
++   public ItemCrafter(String name) {
++      registry = CraftingRegistry.getCraftingRegistry(name);
++   }
++
+    public boolean isBuilding() {
+       return this.building;
+    }
+@@ -130,11 +136,11 @@ public class ItemCrafter extends Observa
+    }
+ 
+    public void addBuildable(String itemId) {
+-      this.buildables.add(itemId);
++      this.registry.buildables.add(itemId);
+    }
+ 
+    public ArrayList getBuildables() {
+-      return this.buildables;
++      return this.registry.buildables;
+    }
+ 
+    public ItemData getBuildableItem(String id) {
+@@ -154,7 +160,7 @@ public class ItemCrafter extends Observa
+    }
+ 
+    public ItemData getBuildableItem(int index) {
+-      String id = (String)this.buildables.get(index);
++      String id = (String)this.registry.buildables.get(index);
+       ItemFactory.getInstance();
+       Iterator var3 = ItemFactory.ITEMDATALIST.iterator();
+ 
+diff -rupb recompiled-0.45/moonbase/tiles/behaviors/RecyclerItemCrafter.java src/game/java/com/cairn4/moonbase/tiles/behaviors/RecyclerItemCrafter.java
+--- recompiled-0.45/moonbase/tiles/behaviors/RecyclerItemCrafter.java	2018-07-23 20:47:13.993420300 +0200
++++ src/game/java/com/cairn4/moonbase/tiles/behaviors/RecyclerItemCrafter.java	2018-08-12 11:16:04.448752800 +0200
+@@ -3,6 +3,9 @@ package com.cairn4.moonbase.tiles.behavi
+ import com.cairn4.moonbase.ItemStack;
+ 
+ public class RecyclerItemCrafter extends ItemCrafter {
++   public RecyclerItemCrafter() {
++      super("recycler");
++   }
+    public boolean collectItem() {
+       ItemStack i = (ItemStack)this.itemsToCollect.get(0);
+       boolean collected = super.collectItem();
+diff -rupb recompiled-0.45/moonbase/tiles/ConstructionYard.java src/game/java/com/cairn4/moonbase/tiles/ConstructionYard.java
+--- recompiled-0.45/moonbase/tiles/ConstructionYard.java	2018-07-23 20:47:13.548564800 +0200
++++ src/game/java/com/cairn4/moonbase/tiles/ConstructionYard.java	2018-08-12 11:16:04.854626200 +0200
+@@ -31,7 +31,7 @@ public class ConstructionYard extends Ba
+       this.world.gameScreen.topGroup.addActor(this.buildingParticles);
+       this.buildParticlesOn = false;
+       this.toggleCraftingFx(false);
+-      this.itemCrafter = new ItemCrafter();
++      this.itemCrafter = new ItemCrafter("construction-yard");
+       this.itemCrafter.baseModule = this;
+       this.itemCrafter.addBuildable("habitat-builder");
+       this.itemCrafter.addBuildable("aircleaner-builder");
+diff -rupb recompiled-0.45/moonbase/tiles/CraftingStation.java src/game/java/com/cairn4/moonbase/tiles/CraftingStation.java
+--- recompiled-0.45/moonbase/tiles/CraftingStation.java	2018-07-23 20:47:13.509579800 +0200
++++ src/game/java/com/cairn4/moonbase/tiles/CraftingStation.java	2018-08-12 11:16:04.502736900 +0200
+@@ -16,7 +16,7 @@ public class CraftingStation extends Bas
+    Player player;
+    PlayerInventory playerInventory;
+    private Image buildFinishedIcon;
+-   private ItemCrafter itemCrafter = new ItemCrafter();
++   private ItemCrafter itemCrafter = new ItemCrafter("crafting-station");
+    protected Color lightOnColor = new Color(0.25F, 0.25F, 0.25F, 0.3F);
+ 
+    public CraftingStation(World world, Chunk chunk, int x, int y) {
+diff -rupb recompiled-0.45/moonbase/tiles/Recycler.java src/game/java/com/cairn4/moonbase/tiles/Recycler.java
+--- recompiled-0.45/moonbase/tiles/Recycler.java	2018-07-23 20:47:12.884781700 +0200
++++ src/game/java/com/cairn4/moonbase/tiles/Recycler.java	2018-08-12 11:16:04.558721500 +0200
+@@ -31,7 +31,7 @@ public class Recycler extends BaseModule
+       this.powerGenRate = 0.0F;
+       this.setupPhysics("smelter");
+       this.addSmoke();
+-      this.itemCrafter = new ItemCrafter();
++      this.itemCrafter = new ItemCrafter("recycler");
+       this.itemCrafter.buildQueueSizeLimit = 1;
+       this.itemCrafter.addBuildable("metal");
+       this.itemCrafter.baseModule = this;
+diff -rupb recompiled-0.45/moonbase/tiles/Smelter.java src/game/java/com/cairn4/moonbase/tiles/Smelter.java
+--- recompiled-0.45/moonbase/tiles/Smelter.java	2018-07-23 20:47:12.757822600 +0200
++++ src/game/java/com/cairn4/moonbase/tiles/Smelter.java	2018-08-12 11:16:04.683679000 +0200
+@@ -33,7 +33,7 @@ public class Smelter extends BaseModule
+       this.powerGenRate = 0.0F;
+       this.setupPhysics("smelter");
+       this.addSmoke();
+-      this.itemCrafter = new ItemCrafter();
++      this.itemCrafter = new ItemCrafter("smelter");
+       this.itemCrafter.addBuildable("metal");
+       this.itemCrafter.addBuildable("metal-beam");
+       this.itemCrafter.addBuildable("refined-scrap");
+diff -rupb recompiled-0.45/moonbase/ui/BaseScreen.java src/game/java/com/cairn4/moonbase/ui/BaseScreen.java
+--- recompiled-0.45/moonbase/ui/BaseScreen.java	2018-07-23 20:47:12.474915800 +0200
++++ src/game/java/com/cairn4/moonbase/ui/BaseScreen.java	2018-08-12 13:01:52.280280700 +0200
+@@ -23,6 +23,8 @@ import com.cairn4.moonbase.AssetManagerS
+ import com.cairn4.moonbase.Audio;
+ import com.cairn4.moonbase.MoonBase;
+ import com.cairn4.moonbase.PlayerInputProcessor;
++import eu.foxiemods.mewnloader.tools.ItemsLoader;
++
+ import java.util.ArrayList;
+ import java.util.Iterator;
+ 
+@@ -149,6 +151,9 @@ public class BaseScreen implements Scree
+       this.stage.addActor(this.persistentUIGroup);
+       this.debugGroup = new Group();
+       this.stage.addActor(this.debugGroup);
++      for(TextureAtlas atlas : ItemsLoader.skinAtlas.values()) {
++         this.skin.addRegions(atlas);
++      }
+    }
+ 
+    public void returned() {
+diff -rupb recompiled-0.45/moonbase/ui/CraftingUI.java src/game/java/com/cairn4/moonbase/ui/CraftingUI.java
+--- recompiled-0.45/moonbase/ui/CraftingUI.java	2018-07-23 20:52:15.835498100 +0200
++++ src/game/java/com/cairn4/moonbase/ui/CraftingUI.java	2018-08-12 11:16:04.737662500 +0200
+@@ -79,7 +79,7 @@ public class CraftingUI extends Popup im
+       this.gameScreen = gameScreen;
+       this.itemCrafter = itemCrafter;
+       this.unlockedBuildables.clear();
+-      Iterator var4 = itemCrafter.buildables.iterator();
++      Iterator var4 = itemCrafter.registry.buildables.iterator();
+ 
+       while(var4.hasNext()) {
+          String id = (String)var4.next();
+@@ -438,7 +438,7 @@ public class CraftingUI extends Popup im
+       buildIndex = 0;
+       int buttonIndex = 0;
+ 
+-      for(Iterator var3 = this.itemCrafter.buildables.iterator(); var3.hasNext(); ++buildIndex) {
++      for(Iterator var3 = this.itemCrafter.registry.buildables.iterator(); var3.hasNext(); ++buildIndex) {
+          String buildable = (String)var3.next();
+          if (this.unlockedBuildables.contains(buildable)) {
+             ItemButton i = (ItemButton)this.itemButtonList.get(buttonIndex);
+@@ -479,7 +479,7 @@ public class CraftingUI extends Popup im
+ 
+    private int getNumOfUnlockedBuildables() {
+       int unlockedItems = 0;
+-      Iterator var2 = this.itemCrafter.buildables.iterator();
++      Iterator var2 = this.itemCrafter.registry.buildables.iterator();
+ 
+       while(var2.hasNext()) {
+          String s = (String)var2.next();
+@@ -520,8 +520,8 @@ public class CraftingUI extends Popup im
+       int buttonIndex = 0;
+ 
+       for(int i = 0; i < this.itemCrafter.getBuildables().size(); ++i) {
+-         if (this.isItemUnlocked((String)this.itemCrafter.buildables.get(i))) {
+-            if (((String)this.itemCrafter.buildables.get(i)).equals(itemId)) {
++         if (this.isItemUnlocked((String)this.itemCrafter.registry.buildables.get(i))) {
++            if (((String)this.itemCrafter.registry.buildables.get(i)).equals(itemId)) {
+                return buttonIndex;
+             }
+ 
+diff -rupb recompiled-0.45/moonbase/ui/Menu.java src/game/java/com/cairn4/moonbase/ui/Menu.java
+--- recompiled-0.45/moonbase/ui/Menu.java	2018-07-23 20:52:15.872486900 +0200
++++ src/game/java/com/cairn4/moonbase/ui/Menu.java	2018-08-12 12:58:36.829039100 +0200
+@@ -8,11 +8,12 @@ import com.badlogic.gdx.scenes.scene2d.G
+ import com.badlogic.gdx.scenes.scene2d.Stage;
+ import com.badlogic.gdx.scenes.scene2d.Touchable;
+ import com.badlogic.gdx.scenes.scene2d.ui.Button;
+-import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+ import com.badlogic.gdx.scenes.scene2d.ui.Label.LabelStyle;
++import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+ import com.badlogic.gdx.utils.viewport.Viewport;
+ import com.cairn4.moonbase.PlayerInput;
+ import com.cairn4.moonbase.PlayerInputProcessor;
++
+ import java.util.HashMap;
+ 
+ public class Menu {
+diff -rupb recompiled-0.45/moonbase/WeatherManager.java src/game/java/com/cairn4/moonbase/WeatherManager.java
+--- recompiled-0.45/moonbase/WeatherManager.java	2018-07-23 20:52:15.898478700 +0200
++++ src/game/java/com/cairn4/moonbase/WeatherManager.java	2018-07-24 18:12:26.019789700 +0200
+@@ -1,6 +1,5 @@
+ package com.cairn4.moonbase;
+ 
+-import com.badlogic.gdx.Application;
+ import com.badlogic.gdx.Gdx;
+ import com.badlogic.gdx.audio.Sound;
+ import com.badlogic.gdx.files.FileHandle;
+diff -rupb recompiled-0.45/moonbase/World.java src/game/java/com/cairn4/moonbase/World.java
+--- recompiled-0.45/moonbase/World.java	2018-07-23 21:12:53.244395600 +0200
++++ src/game/java/com/cairn4/moonbase/World.java	2018-07-24 18:12:26.028789400 +0200
+@@ -1,7 +1,7 @@
+ package com.cairn4.moonbase;
+ 
+-import box2dLight.RayHandler;
+ import aurelienribon.bodyeditor.BodyEditorLoader;
++import box2dLight.RayHandler;
+ import com.badlogic.gdx.Gdx;
+ import com.badlogic.gdx.audio.Sound;
+ import com.badlogic.gdx.graphics.Color;
+@@ -11,28 +11,14 @@ import com.badlogic.gdx.math.Vector2;
+ import com.badlogic.gdx.utils.Pool;
+ import com.badlogic.gdx.utils.Pools;
+ import com.cairn4.moonbase.techtree.TechManager;
+-import com.cairn4.moonbase.tiles.AirCleaner;
+-import com.cairn4.moonbase.tiles.Airlock;
+-import com.cairn4.moonbase.tiles.BaseModule;
+-import com.cairn4.moonbase.tiles.CraftingStation;
+-import com.cairn4.moonbase.tiles.GroundTile;
+-import com.cairn4.moonbase.tiles.HabitatModule;
+-import com.cairn4.moonbase.tiles.Lander;
+-import com.cairn4.moonbase.tiles.SolarPanel;
+-import com.cairn4.moonbase.tiles.Tile;
++import com.cairn4.moonbase.tiles.*;
+ import com.cairn4.moonbase.ui.GameScreen;
+ import com.cairn4.moonbase.ui.MainMenu;
+ import com.cairn4.moonbase.ui.PausePopup;
+-import com.cairn4.moonbase.worlddata.ChunkLoader;
+-import com.cairn4.moonbase.worlddata.ItemDropperData;
+-import com.cairn4.moonbase.worlddata.ItemDropperFactory;
+-import com.cairn4.moonbase.worlddata.ItemDropperSpawnBiome;
+-import com.cairn4.moonbase.worlddata.WeatherData;
+-import java.util.ArrayList;
+-import java.util.HashMap;
+-import java.util.Iterator;
+-import java.util.Timer;
+-import java.util.TimerTask;
++import com.cairn4.moonbase.worlddata.*;
++import eu.foxiemods.mewnloader.MewnEvent;
++
++import java.util.*;
+ import java.util.Map.Entry;
+ 
+ public class World {
+@@ -208,6 +194,7 @@ public class World {
+          this.updatePlayerSpine(delta);
+          break;
+       case playing:
++         MewnEvent.GameTickPre.fire();
+          this.gameScreen.physicsCounter.start();
+          this.baseManager.update(delta);
+          this.regrowthManager.update(delta);
+@@ -235,6 +222,7 @@ public class World {
+          }
+ 
+          this.updateChunks(delta);
++         MewnEvent.GameTickPost.fire();
+       case paused:
+       default:
+          break;
