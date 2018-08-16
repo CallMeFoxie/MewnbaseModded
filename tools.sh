@@ -70,6 +70,20 @@ diff_base_game() {
   [ $? -ne 1 ] && echo "Error creating a diff!" && exit 1
 }
 
+copy_resources() {
+  [ ! -f patches/resourceslist-${GAME_VERSION}.txt ] && echo "Missing resources list for version ${GAME_VERSION}!" && exit 1
+  [ ! -d game/unpacked-${GAME_VERSION} ] && echo "Missing unpacked folder! Run unpack_jar first!" && exit 1
+
+  [ -d src/game/resources ] && rm -rf src/game/resources
+  mkdir -p src/game/resources
+
+  for item in `cat patches/resourceslist-${GAME_VERSION}.txt`; do
+    if [ x"$item" != "x" ]; then
+      cp -rvp game/unpacked-${GAME_VERSION}/$item src/game/resources/
+    fi
+  done
+}
+
 pushd -n $(pwd) >/dev/null
 
 echo "Running task: " $task
@@ -90,12 +104,16 @@ case "$task" in
   "copy_to_src")
     copy_to_src
     ;;
+  "copy_resources")
+    copy_resources
+    ;;
   "workspace")
     $0 build_fernflower
     $0 unpack_jar
     $0 decompile_jar
     $0 patch_source
     $0 copy_to_src
+    $0 copy_resources
     ./gradlew idea
     ;;
   "diff_base_game")

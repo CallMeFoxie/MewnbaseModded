@@ -1,0 +1,15 @@
+*.png
+*.atlas
+*.json
+*.fnt
+i18n/
+item_droppers/
+default_skin/
+logo/
+music/
+particles/
+player/
+repairdrone/
+shaders/
+sounds/
+Tiles/
