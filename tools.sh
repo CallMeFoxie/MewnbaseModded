@@ -45,7 +45,7 @@ patch_source() {
   mkdir game/patched-${GAME_VERSION}
   cp -rp game/decompiled-${GAME_VERSION}/* game/patched-${GAME_VERSION}/
   cd game/patched-${GAME_VERSION}/
-  patch -p5 -l --binary --no-backup-if-mismatch < ../../patches/patches-${GAME_VERSION}-compile.patch
+  patch -p5 -l --ignore-whitespace --binary --no-backup-if-mismatch < ../../patches/patches-${GAME_VERSION}-compile.patch
 
   [ $? -ne 0 ] && echo "Failed to patch source files!" && exit 1
 }
@@ -58,14 +58,14 @@ copy_to_src() {
   mkdir -p src/game/java/com/cairn4
   cp -rp game/patched-${GAME_VERSION}/* src/game/java/com/cairn4
   cd src/game/java/com/cairn4
-  patch -p5 -l --binary --no-backup-if-mismatch < ../../../../../patches/patches-${GAME_VERSION}-api.patch
+  patch -p5 -l --ignore-whitespace --binary --no-backup-if-mismatch < ../../../../../patches/patches-${GAME_VERSION}-api.patch
 }
 
 diff_base_game() {
   [ ! -d src/game/java/com/cairn4 ] && echo "Target folder does not exist! Nothing to diff!" && exit 1
   [ ! -d game/patched-${GAME_VERSION} ] && echo "Missing patched folder! Run patch_source first!" && exit 1
 
-  diff -rupb game/patched-${GAME_VERSION} src/game/java/com/cairn4 > patches/patches-${GAME_VERSION}-api.patch
+  diff -rupb -B game/patched-${GAME_VERSION} src/game/java/com/cairn4 > patches/patches-${GAME_VERSION}-api.patch
 
   [ $? -ne 1 ] && echo "Error creating a diff!" && exit 1
 }
