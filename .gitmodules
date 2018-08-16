@@ -10,3 +10,6 @@
 [submodule "src/extra/libgdx-contribs"]
 	path = src/extra/libgdx-contribs
 	url = https://github.com/manuelbua/libgdx-contribs.git
+[submodule "tools/fernflower"]
+	path = tools/fernflower
+	url = https://github.com/fesh0r/fernflower.git
