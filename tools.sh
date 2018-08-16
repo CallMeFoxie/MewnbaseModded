@@ -2,6 +2,17 @@
 
 task=$1
 
+ISBOW=
+if [ x"$(cat /proc/sys/kernel/osrelease | grep -i Microsoft)" != "x" ]; then
+  ISBOW="BOW"
+elif [ x"$(uname | grep MINGW)" != "x" ]; then
+  ISBOW="MINGW"
+elif [ x"$(uname | grep -i Cygwin)" != "x" ]; then
+  ISBOW="Cygwin"
+fi
+
+[ x"$ISBOW" != "x" ] && echo "Running on platform: $ISBOW"
+
 [ -z "${GAME_VERSION}" ] && echo "Missing ENV GAME_VERSION" && exit 1
 
 build_fernflower() {
@@ -35,6 +46,11 @@ decompile_jar() {
   java -jar tools/fernflower/build/libs/fernflower.jar game/unpacked-${GAME_VERSION}/com/cairn4/ game/decompiled-${GAME_VERSION}/
 
   [ $? -ne 0 ] && echo "Failed to decompile source files!" && exit 1
+
+  # convert DOS2UNIX on BashOnWindows
+  if [ x"$ISBOW" != "x" ]; then 
+    find game/decompiled-${GAME_VERSION} -type f | grep ".java$" | xargs dos2unix
+  fi
 }
 
 patch_source() {
@@ -77,7 +93,8 @@ copy_resources() {
   [ -d src/game/resources ] && rm -rf src/game/resources
   mkdir -p src/game/resources
 
-  for item in `cat patches/resourceslist-${GAME_VERSION}.txt`; do
+  cat patches/resourceslist-${GAME_VERSION}.txt | while read -r item; do
+    echo "Copying $item"
     if [ x"$item" != "x" ]; then
       cp -rvp game/unpacked-${GAME_VERSION}/$item src/game/resources/
     fi
