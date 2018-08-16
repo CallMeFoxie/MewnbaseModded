@@ -78,18 +78,3 @@ jar {
         )
     }
 }
-
-task diffBaseGame(type: Exec) {
-    workingDir '.'
-
-    commandLine 'diff', '-rupb', 'recompiled-0.45', 'src/game/java/com/cairn4'
-
-    ignoreExitValue = true
-
-    standardOutput = new ByteArrayOutputStream()
-
-    doLast {
-        def theOutput = standardOutput.toString()
-        new File("$projectDir/patches/patches-$gameVersion-api.patch").text = theOutput
-    }
-}
