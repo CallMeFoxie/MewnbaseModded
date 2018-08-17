@@ -1,4 +1,4 @@
-package eu.foxiemods.mewnloader;
+package eu.foxiemods.mewnloader.tools;
 
 import java.util.ArrayList;
 import java.util.HashMap;

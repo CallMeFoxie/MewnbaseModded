@@ -173,12 +173,12 @@ diff -rupb -B game/patched-0.45/moonbase/tiles/behaviors/GreenHouseItemCrafter.j
              }
 diff -rupb -B game/patched-0.45/moonbase/tiles/behaviors/ItemCrafter.java src/game/java/com/cairn4/moonbase/tiles/behaviors/ItemCrafter.java
 --- game/patched-0.45/moonbase/tiles/behaviors/ItemCrafter.java	2018-08-16 21:34:34.301095900 +0200
-+++ src/game/java/com/cairn4/moonbase/tiles/behaviors/ItemCrafter.java	2018-08-16 21:34:50.259526400 +0200
++++ src/game/java/com/cairn4/moonbase/tiles/behaviors/ItemCrafter.java	2018-08-17 22:33:03.789782900 +0200
 @@ -17,6 +17,8 @@ import com.cairn4.moonbase.World;
  import com.cairn4.moonbase.tiles.BaseModule;
  import com.cairn4.moonbase.ui.Localization;
  import com.cairn4.moonbase.worlddata.BehaviorData;
-+import eu.foxiemods.mewnloader.CraftingRegistry;
++import eu.foxiemods.mewnloader.tools.CraftingRegistry;
 +
  import java.util.ArrayList;
  import java.util.Iterator;
@@ -203,12 +203,13 @@ diff -rupb -B game/patched-0.45/moonbase/tiles/behaviors/ItemCrafter.java src/ga
     public boolean isBuilding() {
        return this.building;
     }
-@@ -130,11 +136,11 @@ public class ItemCrafter extends Observa
+@@ -130,11 +136,12 @@ public class ItemCrafter extends Observa
     }
  
     public void addBuildable(String itemId) {
 -      this.buildables.add(itemId);
-+      this.registry.buildables.add(itemId);
++      if(!this.registry.buildables.contains(itemId))
++         this.registry.buildables.add(itemId);
     }
  
     public ArrayList getBuildables() {
@@ -217,7 +218,7 @@ diff -rupb -B game/patched-0.45/moonbase/tiles/behaviors/ItemCrafter.java src/ga
     }
  
     public ItemData getBuildableItem(String id) {
-@@ -154,7 +160,7 @@ public class ItemCrafter extends Observa
+@@ -154,7 +161,7 @@ public class ItemCrafter extends Observa
     }
  
     public ItemData getBuildableItem(int index) {
@@ -546,29 +547,39 @@ diff -rupb -B game/patched-0.45/moonbase/TutorialPlayerObserver.java src/game/ja
        if (o == "droppedItem" && this.tutorial.stage == Tutorial.STAGES.droppingItems && this.p.playerInventory.getAmountOfItem("scrap") == 0) {
 diff -rupb -B game/patched-0.45/moonbase/ui/BaseScreen.java src/game/java/com/cairn4/moonbase/ui/BaseScreen.java
 --- game/patched-0.45/moonbase/ui/BaseScreen.java	2018-08-16 21:33:32.225231300 +0200
-+++ src/game/java/com/cairn4/moonbase/ui/BaseScreen.java	2018-08-16 21:34:50.342505000 +0200
-@@ -23,6 +23,8 @@ import com.cairn4.moonbase.AssetManagerS
++++ src/game/java/com/cairn4/moonbase/ui/BaseScreen.java	2018-08-17 22:42:41.803583300 +0200
+@@ -14,8 +14,8 @@ import com.badlogic.gdx.scenes.scene2d.G
+ import com.badlogic.gdx.scenes.scene2d.Stage;
+ import com.badlogic.gdx.scenes.scene2d.Touchable;
+ import com.badlogic.gdx.scenes.scene2d.ui.Label;
+-import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+ import com.badlogic.gdx.scenes.scene2d.ui.Label.LabelStyle;
++import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+ import com.badlogic.gdx.scenes.scene2d.ui.TextButton.TextButtonStyle;
+ import com.badlogic.gdx.scenes.scene2d.utils.NinePatchDrawable;
+ import com.badlogic.gdx.utils.viewport.FitViewport;
+@@ -23,6 +23,9 @@ import com.cairn4.moonbase.AssetManagerS
  import com.cairn4.moonbase.Audio;
  import com.cairn4.moonbase.MoonBase;
  import com.cairn4.moonbase.PlayerInputProcessor;
 +import eu.foxiemods.mewnloader.tools.ItemsLoader;
++import eu.foxiemods.mewnloader.tools.ResourceTilesLoader;
 +
  import java.util.ArrayList;
  import java.util.Iterator;
  
-@@ -149,6 +151,9 @@ public class BaseScreen implements Scree
+@@ -149,6 +152,8 @@ public class BaseScreen implements Scree
        this.stage.addActor(this.persistentUIGroup);
        this.debugGroup = new Group();
        this.stage.addActor(this.debugGroup);
-+      for(TextureAtlas atlas : ItemsLoader.skinAtlas.values()) {
-+         this.skin.addRegions(atlas);
-+      }
++      this.skin.addRegions(new TextureAtlas(Gdx.files.absolute(ItemsLoader.targetFilePath)));
++      this.skin.addRegions(new TextureAtlas(Gdx.files.absolute(ResourceTilesLoader.targetFilePath)));
     }
  
     public void returned() {
 diff -rupb -B game/patched-0.45/moonbase/ui/CraftingUI.java src/game/java/com/cairn4/moonbase/ui/CraftingUI.java
 --- game/patched-0.45/moonbase/ui/CraftingUI.java	2018-08-16 21:34:34.330085800 +0200
-+++ src/game/java/com/cairn4/moonbase/ui/CraftingUI.java	2018-08-16 21:34:50.347503900 +0200
++++ src/game/java/com/cairn4/moonbase/ui/CraftingUI.java	2018-08-17 22:33:03.744796500 +0200
 @@ -79,7 +79,7 @@ public class CraftingUI extends Popup im
        this.gameScreen = gameScreen;
        this.itemCrafter = itemCrafter;
@@ -777,3 +788,33 @@ diff -rupb -B game/patched-0.45/moonbase/World.java src/game/java/com/cairn4/moo
        case paused:
        default:
           break;
+diff -rupb -B game/patched-0.45/moonbase/worlddata/ItemDropperData.java src/game/java/com/cairn4/moonbase/worlddata/ItemDropperData.java
+--- game/patched-0.45/moonbase/worlddata/ItemDropperData.java	2018-08-16 21:34:34.389066900 +0200
++++ src/game/java/com/cairn4/moonbase/worlddata/ItemDropperData.java	2018-08-17 22:30:19.322682100 +0200
+@@ -33,4 +33,6 @@ public class ItemDropperData {
+    public ArrayList<InventoryItemData> guaranteedDrops = new ArrayList();
+    public float transformTime;
+    public String transformNewId;
++
++   public String modId;
+ }
+diff -rupb -B game/patched-0.45/moonbase/worlddata/ItemDropperFactory.java src/game/java/com/cairn4/moonbase/worlddata/ItemDropperFactory.java
+--- game/patched-0.45/moonbase/worlddata/ItemDropperFactory.java	2018-08-16 21:34:34.391065900 +0200
++++ src/game/java/com/cairn4/moonbase/worlddata/ItemDropperFactory.java	2018-08-17 22:30:19.411652400 +0200
+@@ -8,6 +8,8 @@ import com.cairn4.moonbase.Chunk;
+ import com.cairn4.moonbase.World;
+ import com.cairn4.moonbase.tiles.ItemDropper;
+ import com.cairn4.moonbase.tiles.ResearchObject;
++import eu.foxiemods.mewnloader.tools.ResourceTilesLoader;
++
+ import java.util.ArrayList;
+ import java.util.Iterator;
+ 
+@@ -36,6 +38,7 @@ public class ItemDropperFactory {
+          String fileText = this.file.readString();
+          ItemDropperSet ids = (ItemDropperSet)json.fromJson(ItemDropperSet.class, fileText);
+          this.itemDropperDataList = ids.itemDropperList;
++         this.itemDropperDataList.addAll(ResourceTilesLoader.ITEMDROPPERLIST);
+       } else {
+          Gdx.app.error("MoonBase", "ItemDropperFactory: Item dropper json file not found!");
+       }

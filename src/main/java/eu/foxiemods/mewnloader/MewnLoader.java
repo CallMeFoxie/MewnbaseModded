@@ -2,6 +2,7 @@ package eu.foxiemods.mewnloader;
 
 import com.badlogic.gdx.Gdx;
 import eu.foxiemods.mewnloader.tools.ItemsLoader;
+import eu.foxiemods.mewnloader.tools.ResourceTilesLoader;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
@@ -80,6 +81,7 @@ public class MewnLoader extends URLClassLoader {
 
    public static void modPreinit() {
       ItemsLoader.LoadItems();
+      ResourceTilesLoader.LoadItems();
       for(MewnMod mod : MewnMods) {
          mod.preinit();
       }
