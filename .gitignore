@@ -2,3 +2,13 @@ build/
 .gradle/
 **.swp
 src/game/
+*.iml
+*.ipr
+*.iws
+saves/
+run/
+crashlog*.txt
+game/
+mods/
+out/
+settings.json
