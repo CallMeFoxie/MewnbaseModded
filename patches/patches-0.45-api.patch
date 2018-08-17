@@ -1,6 +1,6 @@
 diff -rupb -B game/patched-0.45/moonbase/ItemData.java src/game/java/com/cairn4/moonbase/ItemData.java
---- game/patched-0.45/moonbase/ItemData.java	2018-08-16 21:09:24.752277200 +0200
-+++ src/game/java/com/cairn4/moonbase/ItemData.java	2018-08-12 11:18:27.379786500 +0200
+--- game/patched-0.45/moonbase/ItemData.java	2018-08-16 21:34:34.258109900 +0200
++++ src/game/java/com/cairn4/moonbase/ItemData.java	2018-08-16 21:34:50.216541300 +0200
 @@ -20,6 +20,8 @@ public class ItemData {
     public ArrayList<InventoryItemData> craftingBonusItems = new ArrayList();
     public String techReq;
@@ -11,8 +11,8 @@ diff -rupb -B game/patched-0.45/moonbase/ItemData.java src/game/java/com/cairn4/
     @Deprecated
     public float pickupTime;
 diff -rupb -B game/patched-0.45/moonbase/ItemFactory.java src/game/java/com/cairn4/moonbase/ItemFactory.java
---- game/patched-0.45/moonbase/ItemFactory.java	2018-08-16 21:09:24.763272100 +0200
-+++ src/game/java/com/cairn4/moonbase/ItemFactory.java	2018-08-12 13:01:52.356256900 +0200
+--- game/patched-0.45/moonbase/ItemFactory.java	2018-08-16 21:34:34.261108600 +0200
++++ src/game/java/com/cairn4/moonbase/ItemFactory.java	2018-08-16 21:34:50.223538900 +0200
 @@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
  import com.badlogic.gdx.files.FileHandle;
  import com.badlogic.gdx.utils.Json;
@@ -30,8 +30,8 @@ diff -rupb -B game/patched-0.45/moonbase/ItemFactory.java src/game/java/com/cair
  
     }
 diff -rupb -B game/patched-0.45/moonbase/MoonBase.java src/game/java/com/cairn4/moonbase/MoonBase.java
---- game/patched-0.45/moonbase/MoonBase.java	2018-08-16 21:09:24.770270300 +0200
-+++ src/game/java/com/cairn4/moonbase/MoonBase.java	2018-07-24 18:12:25.990793400 +0200
+--- game/patched-0.45/moonbase/MoonBase.java	2018-08-16 21:34:34.268107800 +0200
++++ src/game/java/com/cairn4/moonbase/MoonBase.java	2018-08-16 21:34:50.228537300 +0200
 @@ -16,6 +16,7 @@ import com.badlogic.gdx.graphics.g2d.Par
  import com.badlogic.gdx.graphics.g2d.TextureAtlas;
  import com.cairn4.moonbase.ui.Splash;
@@ -59,8 +59,8 @@ diff -rupb -B game/patched-0.45/moonbase/MoonBase.java src/game/java/com/cairn4/
           DISCORD_ON = false;
        }
 diff -rupb -B game/patched-0.45/moonbase/TerrainGen.java src/game/java/com/cairn4/moonbase/TerrainGen.java
---- game/patched-0.45/moonbase/TerrainGen.java	2018-08-16 21:09:24.804272100 +0200
-+++ src/game/java/com/cairn4/moonbase/TerrainGen.java	2018-07-24 18:12:25.997793400 +0200
+--- game/patched-0.45/moonbase/TerrainGen.java	2018-08-16 21:34:34.293098200 +0200
++++ src/game/java/com/cairn4/moonbase/TerrainGen.java	2018-08-16 21:34:50.234534800 +0200
 @@ -13,7 +13,6 @@ import java.util.Iterator;
  import java.util.List;
  
@@ -70,8 +70,8 @@ diff -rupb -B game/patched-0.45/moonbase/TerrainGen.java src/game/java/com/cairn
  import za.co.luma.math.sampling.UniformPoissonDiskSampler;
  
 diff -rupb -B game/patched-0.45/moonbase/tiles/Airlock.java src/game/java/com/cairn4/moonbase/tiles/Airlock.java
---- game/patched-0.45/moonbase/tiles/Airlock.java	2018-08-16 21:06:42.802281300 +0200
-+++ src/game/java/com/cairn4/moonbase/tiles/Airlock.java	2018-08-16 20:40:20.261588500 +0200
+--- game/patched-0.45/moonbase/tiles/Airlock.java	2018-08-16 21:33:31.891100600 +0200
++++ src/game/java/com/cairn4/moonbase/tiles/Airlock.java	2018-08-16 21:34:50.239533700 +0200
 @@ -37,7 +37,7 @@ public class Airlock extends HabitatModu
        return this.outerDoorDirection;
     }
@@ -111,8 +111,8 @@ diff -rupb -B game/patched-0.45/moonbase/tiles/Airlock.java src/game/java/com/ca
  
     protected void createDrawables() {
 diff -rupb -B game/patched-0.45/moonbase/tiles/AutoAirlock.java src/game/java/com/cairn4/moonbase/tiles/AutoAirlock.java
---- game/patched-0.45/moonbase/tiles/AutoAirlock.java	2018-08-16 21:06:42.757295700 +0200
-+++ src/game/java/com/cairn4/moonbase/tiles/AutoAirlock.java	2018-08-15 21:49:49.404211700 +0200
+--- game/patched-0.45/moonbase/tiles/AutoAirlock.java	2018-08-16 21:33:31.897099000 +0200
++++ src/game/java/com/cairn4/moonbase/tiles/AutoAirlock.java	2018-08-16 21:34:50.244531700 +0200
 @@ -13,8 +13,8 @@ import com.cairn4.moonbase.tiles.behavio
  public class AutoAirlock extends Airlock {
     StepTrigger stepTrigger;
@@ -125,8 +125,8 @@ diff -rupb -B game/patched-0.45/moonbase/tiles/AutoAirlock.java src/game/java/co
        this.stepTrigger = new StepTrigger();
        this.stepTrigger.baseModule = this;
 diff -rupb -B game/patched-0.45/moonbase/tiles/behaviors/GarageCrafter.java src/game/java/com/cairn4/moonbase/tiles/behaviors/GarageCrafter.java
---- game/patched-0.45/moonbase/tiles/behaviors/GarageCrafter.java	2018-08-16 21:06:43.209194900 +0200
-+++ src/game/java/com/cairn4/moonbase/tiles/behaviors/GarageCrafter.java	2018-08-12 11:16:04.797643200 +0200
+--- game/patched-0.45/moonbase/tiles/behaviors/GarageCrafter.java	2018-08-16 21:33:31.934086600 +0200
++++ src/game/java/com/cairn4/moonbase/tiles/behaviors/GarageCrafter.java	2018-08-16 21:34:50.248530300 +0200
 @@ -10,6 +10,10 @@ public class GarageCrafter extends ItemC
     int localX;
     int localY;
@@ -139,9 +139,9 @@ diff -rupb -B game/patched-0.45/moonbase/tiles/behaviors/GarageCrafter.java src/
        Gdx.app.log("MewnBase", "GarageCrafter: Done building " + this.getCurrentBuildItem().getName());
        this.building = false;
 diff -rupb -B game/patched-0.45/moonbase/tiles/behaviors/GreenHouseItemCrafter.java src/game/java/com/cairn4/moonbase/tiles/behaviors/GreenHouseItemCrafter.java
---- game/patched-0.45/moonbase/tiles/behaviors/GreenHouseItemCrafter.java	2018-08-16 21:06:43.201198800 +0200
-+++ src/game/java/com/cairn4/moonbase/tiles/behaviors/GreenHouseItemCrafter.java	2018-08-12 11:16:04.630696500 +0200
-@@ -9,21 +10,25 @@ import java.util.ArrayList;
+--- game/patched-0.45/moonbase/tiles/behaviors/GreenHouseItemCrafter.java	2018-08-16 21:33:31.937085700 +0200
++++ src/game/java/com/cairn4/moonbase/tiles/behaviors/GreenHouseItemCrafter.java	2018-08-16 21:34:50.254528400 +0200
+@@ -9,21 +9,25 @@ import java.util.ArrayList;
  import java.util.Iterator;
  
  public class GreenHouseItemCrafter extends ItemCrafter {
@@ -172,8 +172,8 @@ diff -rupb -B game/patched-0.45/moonbase/tiles/behaviors/GreenHouseItemCrafter.j
                 new ItemPickup(this.baseModule.world, this.baseModule.chunk, this.baseModule.getWorldXPos(), this.baseModule.getWorldYPos(), newItem);
              }
 diff -rupb -B game/patched-0.45/moonbase/tiles/behaviors/ItemCrafter.java src/game/java/com/cairn4/moonbase/tiles/behaviors/ItemCrafter.java
---- game/patched-0.45/moonbase/tiles/behaviors/ItemCrafter.java	2018-08-16 21:09:24.817266600 +0200
-+++ src/game/java/com/cairn4/moonbase/tiles/behaviors/ItemCrafter.java	2018-08-12 11:13:49.890648300 +0200
+--- game/patched-0.45/moonbase/tiles/behaviors/ItemCrafter.java	2018-08-16 21:34:34.301095900 +0200
++++ src/game/java/com/cairn4/moonbase/tiles/behaviors/ItemCrafter.java	2018-08-16 21:34:50.259526400 +0200
 @@ -17,6 +17,8 @@ import com.cairn4.moonbase.World;
  import com.cairn4.moonbase.tiles.BaseModule;
  import com.cairn4.moonbase.ui.Localization;
@@ -227,8 +227,8 @@ diff -rupb -B game/patched-0.45/moonbase/tiles/behaviors/ItemCrafter.java src/ga
        Iterator var3 = ItemFactory.ITEMDATALIST.iterator();
  
 diff -rupb -B game/patched-0.45/moonbase/tiles/behaviors/RecyclerItemCrafter.java src/game/java/com/cairn4/moonbase/tiles/behaviors/RecyclerItemCrafter.java
---- game/patched-0.45/moonbase/tiles/behaviors/RecyclerItemCrafter.java	2018-08-16 21:06:42.946254500 +0200
-+++ src/game/java/com/cairn4/moonbase/tiles/behaviors/RecyclerItemCrafter.java	2018-08-12 11:16:04.448752800 +0200
+--- game/patched-0.45/moonbase/tiles/behaviors/RecyclerItemCrafter.java	2018-08-16 21:33:31.986069500 +0200
++++ src/game/java/com/cairn4/moonbase/tiles/behaviors/RecyclerItemCrafter.java	2018-08-16 21:34:50.264524700 +0200
 @@ -3,10 +3,14 @@ package com.cairn4.moonbase.tiles.behavi
  import com.cairn4.moonbase.ItemStack;
  
@@ -245,8 +245,8 @@ diff -rupb -B game/patched-0.45/moonbase/tiles/behaviors/RecyclerItemCrafter.jav
  
        return collected;
 diff -rupb -B game/patched-0.45/moonbase/tiles/ConstructionYard.java src/game/java/com/cairn4/moonbase/tiles/ConstructionYard.java
---- game/patched-0.45/moonbase/tiles/ConstructionYard.java	2018-08-16 21:06:42.623339300 +0200
-+++ src/game/java/com/cairn4/moonbase/tiles/ConstructionYard.java	2018-08-12 11:16:04.854626200 +0200
+--- game/patched-0.45/moonbase/tiles/ConstructionYard.java	2018-08-16 21:33:32.018059400 +0200
++++ src/game/java/com/cairn4/moonbase/tiles/ConstructionYard.java	2018-08-16 21:34:50.271523900 +0200
 @@ -31,7 +31,7 @@ public class ConstructionYard extends Ba
        this.world.gameScreen.topGroup.addActor(this.buildingParticles);
        this.buildParticlesOn = false;
@@ -257,8 +257,8 @@ diff -rupb -B game/patched-0.45/moonbase/tiles/ConstructionYard.java src/game/ja
        this.itemCrafter.addBuildable("habitat-builder");
        this.itemCrafter.addBuildable("aircleaner-builder");
 diff -rupb -B game/patched-0.45/moonbase/tiles/CraftingStation.java src/game/java/com/cairn4/moonbase/tiles/CraftingStation.java
---- game/patched-0.45/moonbase/tiles/CraftingStation.java	2018-08-16 21:06:42.597588900 +0200
-+++ src/game/java/com/cairn4/moonbase/tiles/CraftingStation.java	2018-08-12 11:16:04.502736900 +0200
+--- game/patched-0.45/moonbase/tiles/CraftingStation.java	2018-08-16 21:33:32.024177900 +0200
++++ src/game/java/com/cairn4/moonbase/tiles/CraftingStation.java	2018-08-16 21:34:50.277522000 +0200
 @@ -16,7 +16,7 @@ public class CraftingStation extends Bas
     Player player;
     PlayerInventory playerInventory;
@@ -269,8 +269,8 @@ diff -rupb -B game/patched-0.45/moonbase/tiles/CraftingStation.java src/game/jav
  
     public CraftingStation(World world, Chunk chunk, int x, int y) {
 diff -rupb -B game/patched-0.45/moonbase/tiles/ItemDropper.java src/game/java/com/cairn4/moonbase/tiles/ItemDropper.java
---- game/patched-0.45/moonbase/tiles/ItemDropper.java	2018-08-16 21:06:42.310675800 +0200
-+++ src/game/java/com/cairn4/moonbase/tiles/ItemDropper.java	2018-08-16 21:01:12.478020900 +0200
+--- game/patched-0.45/moonbase/tiles/ItemDropper.java	2018-08-16 21:33:32.088583400 +0200
++++ src/game/java/com/cairn4/moonbase/tiles/ItemDropper.java	2018-08-16 21:34:50.282519100 +0200
 @@ -21,10 +21,7 @@ import com.cairn4.moonbase.World;
  import com.cairn4.moonbase.tiles.behaviors.Behavior;
  import com.cairn4.moonbase.tiles.behaviors.CooldownTimer;
@@ -295,8 +295,8 @@ diff -rupb -B game/patched-0.45/moonbase/tiles/ItemDropper.java src/game/java/co
        this(world, chunk, x, y, ItemDropperFactory.getInstance().getItemDropperData(itemDropperId));
     }
 diff -rupb -B game/patched-0.45/moonbase/tiles/ItemPile.java src/game/java/com/cairn4/moonbase/tiles/ItemPile.java
---- game/patched-0.45/moonbase/tiles/ItemPile.java	2018-08-16 21:06:42.248696300 +0200
-+++ src/game/java/com/cairn4/moonbase/tiles/ItemPile.java	2018-08-16 21:01:12.532001700 +0200
+--- game/patched-0.45/moonbase/tiles/ItemPile.java	2018-08-16 21:33:32.091582400 +0200
++++ src/game/java/com/cairn4/moonbase/tiles/ItemPile.java	2018-08-16 21:34:50.288516900 +0200
 @@ -15,6 +15,7 @@ import com.cairn4.moonbase.ParticleActor
  import com.cairn4.moonbase.Player;
  import com.cairn4.moonbase.World;
@@ -317,12 +317,13 @@ diff -rupb -B game/patched-0.45/moonbase/tiles/ItemPile.java src/game/java/com/c
        super(world, chunk, x, y);
        this.type = Tile.types.pile;
 diff -rupb -B game/patched-0.45/moonbase/tiles/ProtoBase.java src/game/java/com/cairn4/moonbase/tiles/ProtoBase.java
---- game/patched-0.45/moonbase/tiles/ProtoBase.java	2018-08-16 21:06:42.115738800 +0200
-+++ src/game/java/com/cairn4/moonbase/tiles/ProtoBase.java	2018-08-16 06:45:03.504314400 +0200
-@@ -7,8 +7,10 @@ import com.cairn4.moonbase.World;
+--- game/patched-0.45/moonbase/tiles/ProtoBase.java	2018-08-16 21:33:32.126773100 +0200
++++ src/game/java/com/cairn4/moonbase/tiles/ProtoBase.java	2018-08-17 18:14:17.639013100 +0200
+@@ -7,8 +7,11 @@ import com.cairn4.moonbase.World;
  import com.cairn4.moonbase.tiles.behaviors.ProtoBaseBehavior;
  import com.cairn4.moonbase.ui.BuildingPlacementCursor;
  import com.cairn4.moonbase.ui.TileProgressBar;
++import eu.foxiemods.mewnloader.tools.TileRegistry;
 +
  import java.lang.reflect.Constructor;
  import java.lang.reflect.InvocationTargetException;
@@ -330,7 +331,7 @@ diff -rupb -B game/patched-0.45/moonbase/tiles/ProtoBase.java src/game/java/com/
  
  public class ProtoBase extends BaseModule {
     public ProtoBaseBehavior protoBaseBehavior = new ProtoBaseBehavior();
-@@ -93,20 +95,17 @@ public class ProtoBase extends BaseModul
+@@ -93,20 +96,17 @@ public class ProtoBase extends BaseModul
        Object object = null;
        Class[] classArgs;
        Object[] arguments;
@@ -345,7 +346,8 @@ diff -rupb -B game/patched-0.45/moonbase/tiles/ProtoBase.java src/game/java/com/
 +      arguments = new Object[]{this.chunk.world, this.chunk, new Integer(this.x), new Integer(this.y)};
  
        try {
-          Class aClass = Class.forName("com.cairn4.moonbase.tiles." + this.protoBaseBehavior.base);
+-         Class aClass = Class.forName("com.cairn4.moonbase.tiles." + this.protoBaseBehavior.base);
++         Class aClass = TileRegistry.getTileByName(this.protoBaseBehavior.base);
           Constructor constructor = null;
           constructor = aClass.getConstructor(classArgs);
 -         constructor.newInstance(arguments);
@@ -355,9 +357,18 @@ diff -rupb -B game/patched-0.45/moonbase/tiles/ProtoBase.java src/game/java/com/
           Audio.getInstance().playSound("sounds/interact_hit2.ogg", 1.0F, 0.6F);
        } catch (InstantiationException var6) {
           System.out.println(var6);
+@@ -117,8 +117,6 @@ public class ProtoBase extends BaseModul
+          var8.printStackTrace();
+       } catch (NoSuchMethodException var9) {
+          var9.printStackTrace();
+-      } catch (ClassNotFoundException var10) {
+-         var10.printStackTrace();
+       }
+ 
+       System.out.println("Creating new base module at " + this.x + ", " + this.y);
 diff -rupb -B game/patched-0.45/moonbase/tiles/Recycler.java src/game/java/com/cairn4/moonbase/tiles/Recycler.java
---- game/patched-0.45/moonbase/tiles/Recycler.java	2018-08-16 21:06:42.069755200 +0200
-+++ src/game/java/com/cairn4/moonbase/tiles/Recycler.java	2018-08-12 11:16:04.558721500 +0200
+--- game/patched-0.45/moonbase/tiles/Recycler.java	2018-08-16 21:33:32.138769900 +0200
++++ src/game/java/com/cairn4/moonbase/tiles/Recycler.java	2018-08-16 21:34:50.301513300 +0200
 @@ -31,7 +31,7 @@ public class Recycler extends BaseModule
        this.powerGenRate = 0.0F;
        this.setupPhysics("smelter");
@@ -368,8 +379,8 @@ diff -rupb -B game/patched-0.45/moonbase/tiles/Recycler.java src/game/java/com/c
        this.itemCrafter.addBuildable("metal");
        this.itemCrafter.baseModule = this;
 diff -rupb -B game/patched-0.45/moonbase/tiles/ResearchObject.java src/game/java/com/cairn4/moonbase/tiles/ResearchObject.java
---- game/patched-0.45/moonbase/tiles/ResearchObject.java	2018-08-16 21:06:41.995257200 +0200
-+++ src/game/java/com/cairn4/moonbase/tiles/ResearchObject.java	2018-08-16 21:01:12.415038700 +0200
+--- game/patched-0.45/moonbase/tiles/ResearchObject.java	2018-08-16 21:33:32.149765800 +0200
++++ src/game/java/com/cairn4/moonbase/tiles/ResearchObject.java	2018-08-16 21:34:50.305512100 +0200
 @@ -11,10 +11,15 @@ import com.cairn4.moonbase.World;
  import com.cairn4.moonbase.tiles.behaviors.ResearchDropperBehavior;
  import com.cairn4.moonbase.worlddata.ItemDropperData;
@@ -387,8 +398,8 @@ diff -rupb -B game/patched-0.45/moonbase/tiles/ResearchObject.java src/game/java
        this(world, chunk, x, y, ItemDropperFactory.getInstance().getItemDropperData(itemDropperId));
     }
 diff -rupb -B game/patched-0.45/moonbase/tiles/Smelter.java src/game/java/com/cairn4/moonbase/tiles/Smelter.java
---- game/patched-0.45/moonbase/tiles/Smelter.java	2018-08-16 21:06:41.930279500 +0200
-+++ src/game/java/com/cairn4/moonbase/tiles/Smelter.java	2018-08-12 11:16:04.683679000 +0200
+--- game/patched-0.45/moonbase/tiles/Smelter.java	2018-08-16 21:33:32.158250600 +0200
++++ src/game/java/com/cairn4/moonbase/tiles/Smelter.java	2018-08-16 21:34:50.311509600 +0200
 @@ -33,7 +33,7 @@ public class Smelter extends BaseModule
        this.powerGenRate = 0.0F;
        this.setupPhysics("smelter");
@@ -399,8 +410,8 @@ diff -rupb -B game/patched-0.45/moonbase/tiles/Smelter.java src/game/java/com/ca
        this.itemCrafter.addBuildable("metal-beam");
        this.itemCrafter.addBuildable("refined-scrap");
 diff -rupb -B game/patched-0.45/moonbase/tiles/Tile.java src/game/java/com/cairn4/moonbase/tiles/Tile.java
---- game/patched-0.45/moonbase/tiles/Tile.java	2018-08-16 21:09:24.840259600 +0200
-+++ src/game/java/com/cairn4/moonbase/tiles/Tile.java	2018-08-16 20:58:11.200988700 +0200
+--- game/patched-0.45/moonbase/tiles/Tile.java	2018-08-16 21:34:34.319089300 +0200
++++ src/game/java/com/cairn4/moonbase/tiles/Tile.java	2018-08-16 21:34:50.316508300 +0200
 @@ -16,6 +16,8 @@ import com.cairn4.moonbase.Player;
  import com.cairn4.moonbase.World;
  import com.cairn4.moonbase.tiles.behaviors.Behavior;
@@ -423,8 +434,8 @@ diff -rupb -B game/patched-0.45/moonbase/tiles/Tile.java src/game/java/com/cairn
        GRID_SIZE = 256.0F * SCALE;
        TILE_SIZE = 256.0F * SCALE;
 diff -rupb -B game/patched-0.45/moonbase/tiles/TileFactory.java src/game/java/com/cairn4/moonbase/tiles/TileFactory.java
---- game/patched-0.45/moonbase/tiles/TileFactory.java	2018-08-16 21:06:41.762850400 +0200
-+++ src/game/java/com/cairn4/moonbase/tiles/TileFactory.java	2018-08-16 21:01:19.787037000 +0200
+--- game/patched-0.45/moonbase/tiles/TileFactory.java	2018-08-16 21:33:32.180246300 +0200
++++ src/game/java/com/cairn4/moonbase/tiles/TileFactory.java	2018-08-16 21:34:50.324511200 +0200
 @@ -2,8 +2,6 @@ package com.cairn4.moonbase.tiles;
  
  import com.badlogic.gdx.Gdx;
@@ -505,8 +516,8 @@ diff -rupb -B game/patched-0.45/moonbase/tiles/TileFactory.java src/game/java/co
           System.out.println(var8);
        } catch (IllegalAccessException var9) {
 diff -rupb -B game/patched-0.45/moonbase/tiles/WallLight.java src/game/java/com/cairn4/moonbase/tiles/WallLight.java
---- game/patched-0.45/moonbase/tiles/WallLight.java	2018-08-16 21:06:41.728862100 +0200
-+++ src/game/java/com/cairn4/moonbase/tiles/WallLight.java	2018-08-15 21:47:54.734342300 +0200
+--- game/patched-0.45/moonbase/tiles/WallLight.java	2018-08-16 21:33:32.187243300 +0200
++++ src/game/java/com/cairn4/moonbase/tiles/WallLight.java	2018-08-16 21:34:50.331508200 +0200
 @@ -12,12 +12,12 @@ public class WallLight extends BaseModul
     private float maxPowerDraw = 0.5F;
     private boolean canBePowered;
@@ -523,8 +534,8 @@ diff -rupb -B game/patched-0.45/moonbase/tiles/WallLight.java src/game/java/com/
        this.orientation = o;
        switch(this.orientation) {
 diff -rupb -B game/patched-0.45/moonbase/TutorialPlayerObserver.java src/game/java/com/cairn4/moonbase/TutorialPlayerObserver.java
---- game/patched-0.45/moonbase/TutorialPlayerObserver.java	2018-08-16 21:06:43.816494300 +0200
-+++ src/game/java/com/cairn4/moonbase/TutorialPlayerObserver.java	2018-07-23 20:47:14.828148300 +0200
+--- game/patched-0.45/moonbase/TutorialPlayerObserver.java	2018-08-16 21:33:32.212235600 +0200
++++ src/game/java/com/cairn4/moonbase/TutorialPlayerObserver.java	2018-08-16 21:34:50.336507500 +0200
 @@ -15,6 +15,7 @@ public class TutorialPlayerObserver impl
  
     public void update(Observable observable, Object o) {
@@ -534,8 +545,8 @@ diff -rupb -B game/patched-0.45/moonbase/TutorialPlayerObserver.java src/game/ja
  
        if (o == "droppedItem" && this.tutorial.stage == Tutorial.STAGES.droppingItems && this.p.playerInventory.getAmountOfItem("scrap") == 0) {
 diff -rupb -B game/patched-0.45/moonbase/ui/BaseScreen.java src/game/java/com/cairn4/moonbase/ui/BaseScreen.java
---- game/patched-0.45/moonbase/ui/BaseScreen.java	2018-08-16 21:06:41.616913600 +0200
-+++ src/game/java/com/cairn4/moonbase/ui/BaseScreen.java	2018-08-12 13:01:52.280280700 +0200
+--- game/patched-0.45/moonbase/ui/BaseScreen.java	2018-08-16 21:33:32.225231300 +0200
++++ src/game/java/com/cairn4/moonbase/ui/BaseScreen.java	2018-08-16 21:34:50.342505000 +0200
 @@ -23,6 +23,8 @@ import com.cairn4.moonbase.AssetManagerS
  import com.cairn4.moonbase.Audio;
  import com.cairn4.moonbase.MoonBase;
@@ -556,8 +567,8 @@ diff -rupb -B game/patched-0.45/moonbase/ui/BaseScreen.java src/game/java/com/ca
  
     public void returned() {
 diff -rupb -B game/patched-0.45/moonbase/ui/CraftingUI.java src/game/java/com/cairn4/moonbase/ui/CraftingUI.java
---- game/patched-0.45/moonbase/ui/CraftingUI.java	2018-08-16 21:09:24.850255700 +0200
-+++ src/game/java/com/cairn4/moonbase/ui/CraftingUI.java	2018-08-12 11:16:04.737662500 +0200
+--- game/patched-0.45/moonbase/ui/CraftingUI.java	2018-08-16 21:34:34.330085800 +0200
++++ src/game/java/com/cairn4/moonbase/ui/CraftingUI.java	2018-08-16 21:34:50.347503900 +0200
 @@ -79,7 +79,7 @@ public class CraftingUI extends Popup im
        this.gameScreen = gameScreen;
        this.itemCrafter = itemCrafter;
@@ -597,8 +608,8 @@ diff -rupb -B game/patched-0.45/moonbase/ui/CraftingUI.java src/game/java/com/ca
              }
  
 diff -rupb -B game/patched-0.45/moonbase/ui/GameOverMenu.java src/game/java/com/cairn4/moonbase/ui/GameOverMenu.java
---- game/patched-0.45/moonbase/ui/GameOverMenu.java	2018-08-16 21:06:41.003116800 +0200
-+++ src/game/java/com/cairn4/moonbase/ui/GameOverMenu.java	2018-07-23 20:47:11.919096600 +0200
+--- game/patched-0.45/moonbase/ui/GameOverMenu.java	2018-08-16 21:33:32.304207600 +0200
++++ src/game/java/com/cairn4/moonbase/ui/GameOverMenu.java	2018-08-16 21:34:50.352502300 +0200
 @@ -130,6 +130,7 @@ public class GameOverMenu extends Menu {
           }
        })));
@@ -608,8 +619,8 @@ diff -rupb -B game/patched-0.45/moonbase/ui/GameOverMenu.java src/game/java/com/
  
     }
 diff -rupb -B game/patched-0.45/moonbase/ui/Hud.java src/game/java/com/cairn4/moonbase/ui/Hud.java
---- game/patched-0.45/moonbase/ui/Hud.java	2018-08-16 21:09:24.868262100 +0200
-+++ src/game/java/com/cairn4/moonbase/ui/Hud.java	2018-07-23 20:52:15.867488300 +0200
+--- game/patched-0.45/moonbase/ui/Hud.java	2018-08-16 21:34:34.344082500 +0200
++++ src/game/java/com/cairn4/moonbase/ui/Hud.java	2018-08-16 21:34:50.364497600 +0200
 @@ -752,6 +752,7 @@ public class Hud extends Menu implements
        if (o == "updateAir") {
           this.airProgress.setValue(this.player.playerStatus.getAirPercent());
@@ -619,8 +630,8 @@ diff -rupb -B game/patched-0.45/moonbase/ui/Hud.java src/game/java/com/cairn4/mo
  
           this.setLowHealthAlpha(this.player.playerStatus.getHealthPercent());
 diff -rupb -B game/patched-0.45/moonbase/ui/Menu.java src/game/java/com/cairn4/moonbase/ui/Menu.java
---- game/patched-0.45/moonbase/ui/Menu.java	2018-08-16 21:09:24.887256300 +0200
-+++ src/game/java/com/cairn4/moonbase/ui/Menu.java	2018-08-12 12:58:36.829039100 +0200
+--- game/patched-0.45/moonbase/ui/Menu.java	2018-08-16 21:34:34.356078200 +0200
++++ src/game/java/com/cairn4/moonbase/ui/Menu.java	2018-08-16 21:34:50.370497200 +0200
 @@ -8,8 +8,8 @@ import com.badlogic.gdx.scenes.scene2d.G
  import com.badlogic.gdx.scenes.scene2d.Stage;
  import com.badlogic.gdx.scenes.scene2d.Touchable;
@@ -632,8 +643,8 @@ diff -rupb -B game/patched-0.45/moonbase/ui/Menu.java src/game/java/com/cairn4/m
  import com.cairn4.moonbase.PlayerInput;
  import com.cairn4.moonbase.PlayerInputProcessor;
 diff -rupb -B game/patched-0.45/moonbase/WeatherManager.java src/game/java/com/cairn4/moonbase/WeatherManager.java
---- game/patched-0.45/moonbase/WeatherManager.java	2018-08-16 21:09:24.914247200 +0200
-+++ src/game/java/com/cairn4/moonbase/WeatherManager.java	2018-08-16 20:43:15.852187300 +0200
+--- game/patched-0.45/moonbase/WeatherManager.java	2018-08-16 21:34:34.380070300 +0200
++++ src/game/java/com/cairn4/moonbase/WeatherManager.java	2018-08-16 21:34:50.375494600 +0200
 @@ -1,6 +1,5 @@
  package com.cairn4.moonbase;
  
@@ -669,8 +680,8 @@ diff -rupb -B game/patched-0.45/moonbase/WeatherManager.java src/game/java/com/c
  
     public WeatherManager(World world) {
 diff -rupb -B game/patched-0.45/moonbase/World.java src/game/java/com/cairn4/moonbase/World.java
---- game/patched-0.45/moonbase/World.java	2018-08-16 21:09:24.919245900 +0200
-+++ src/game/java/com/cairn4/moonbase/World.java	2018-08-15 21:50:14.507097700 +0200
+--- game/patched-0.45/moonbase/World.java	2018-08-16 21:34:34.385068700 +0200
++++ src/game/java/com/cairn4/moonbase/World.java	2018-08-16 21:34:50.380493000 +0200
 @@ -1,7 +1,7 @@
  package com.cairn4.moonbase;
  
@@ -725,7 +736,7 @@ diff -rupb -B game/patched-0.45/moonbase/World.java src/game/java/com/cairn4/moo
           new HabitatModule(this, startingChunk, 5, 5);
           new HabitatModule(this, startingChunk, 5, 4);
           new AirCleaner(this, startingChunk, 5, 6);
-@@ -200,13 +189,14 @@ public class World {
+@@ -200,13 +188,14 @@ public class World {
  
     public void update(float delta) {
        this.rayHandler.setCombinedMatrix(this.gameScreen.b2dCam);
@@ -741,7 +752,7 @@ diff -rupb -B game/patched-0.45/moonbase/World.java src/game/java/com/cairn4/moo
           this.gameScreen.physicsCounter.start();
           this.baseManager.update(delta);
           this.regrowthManager.update(delta);
-@@ -222,18 +212,19 @@ public class World {
+@@ -222,18 +211,19 @@ public class World {
           }
  
           int i;
@@ -766,4 +777,3 @@ diff -rupb -B game/patched-0.45/moonbase/World.java src/game/java/com/cairn4/moo
        case paused:
        default:
           break;
- 
