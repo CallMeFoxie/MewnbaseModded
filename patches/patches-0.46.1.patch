@@ -1,0 +1,1884 @@
+diff -rupb -B game/decompiled-0.46.1/moonbase/BaseGroup.java src/game/java/com/cairn4/moonbase/BaseGroup.java
+--- game/decompiled-0.46.1/moonbase/BaseGroup.java	2018-12-15 19:06:10.139275300 +0100
++++ src/game/java/com/cairn4/moonbase/BaseGroup.java	2018-12-15 20:04:00.378575100 +0100
+@@ -145,7 +146,6 @@ public class BaseGroup {
+ 
+       float newResources = totalResourceGen;
+ 
+-      BaseModule b;
+       for(var8 = this.baseModuleList.iterator(); var8.hasNext(); totalDraw += b.getResourceDrawRate(type) * delta) {
+          b = (BaseModule)var8.next();
+          if (b.getPowerDrawRate() * delta <= newResources) {
+@@ -235,7 +235,7 @@ public class BaseGroup {
+             }
+          }
+ 
+-         resourcePool - consumed;
++         resourcePool -= consumed;
+          return;
+       }
+    }
+diff -rupb -B game/decompiled-0.46.1/moonbase/desktop/DesktopLauncher.java src/game/java/com/cairn4/moonbase/desktop/DesktopLauncher.java
+--- game/decompiled-0.46.1/moonbase/desktop/DesktopLauncher.java	2018-12-15 19:06:10.236245700 +0100
++++ src/game/java/com/cairn4/moonbase/desktop/DesktopLauncher.java	2018-12-15 20:04:00.400568400 +0100
+@@ -1,6 +1,8 @@
+ package com.cairn4.moonbase.desktop;
+ 
++import com.badlogic.gdx.Application;
+ import com.badlogic.gdx.Files.FileType;
++import com.badlogic.gdx.Gdx;
+ import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
+ import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
+ import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration.HdpiMode;
+diff -rupb -B game/decompiled-0.46.1/moonbase/Item.java src/game/java/com/cairn4/moonbase/Item.java
+--- game/decompiled-0.46.1/moonbase/Item.java	2018-12-15 19:06:10.313222400 +0100
++++ src/game/java/com/cairn4/moonbase/Item.java	2018-12-15 20:14:35.556899500 +0100
+@@ -10,7 +10,7 @@ import java.util.Iterator;
+ 
+ public class Item {
+    public String id;
+-   public ArrayList actions = new ArrayList();
++   public ArrayList<ItemActions> actions = new ArrayList();
+    private String sprite;
+    public int maxDurability;
+    public int durability;
+@@ -47,7 +47,7 @@ public class Item {
+    public Item() {
+    }
+ 
+-   public Item(String id, String sprite, ArrayList actions, boolean rotatable, int maxDurability, int durability) {
++   public Item(String id, String sprite, ArrayList<ItemActions> actions, boolean rotatable, int maxDurability, int durability) {
+       this.id = id;
+       this.sprite = sprite;
+       this.actions = actions;
+diff -rupb -B game/decompiled-0.46.1/moonbase/ItemData.java src/game/java/com/cairn4/moonbase/ItemData.java
+--- game/decompiled-0.46.1/moonbase/ItemData.java	2018-12-15 19:06:10.327218200 +0100
++++ src/game/java/com/cairn4/moonbase/ItemData.java	2018-12-15 20:14:35.792821600 +0100
+@@ -2,6 +2,8 @@ package com.cairn4.moonbase;
+ 
+ import com.badlogic.gdx.Gdx;
+ import com.cairn4.moonbase.ui.Localization;
++import com.cairn4.moonbase.worlddata.InventoryItemData;
++
+ import java.util.ArrayList;
+ import java.util.MissingResourceException;
+ 
+@@ -14,11 +16,13 @@ public class ItemData {
+    public boolean rotatable;
+    public String useAnimName;
+    public int durability;
+-   public ArrayList requires = new ArrayList();
+-   public ArrayList actions = new ArrayList();
+-   public ArrayList craftingBonusItems = new ArrayList();
++   public ArrayList<RecipieRequirement> requires = new ArrayList();
++   public ArrayList<ItemActions> actions = new ArrayList();
++   public ArrayList<InventoryItemData> craftingBonusItems = new ArrayList();
+    public String techReq;
+    public int researchPoints;
++   public String modId;
++   public String craftedIn;
+    /** @deprecated */
+    @Deprecated
+    public float pickupTime;
+diff -rupb -B game/decompiled-0.46.1/moonbase/ItemDataSet.java src/game/java/com/cairn4/moonbase/ItemDataSet.java
+--- game/decompiled-0.46.1/moonbase/ItemDataSet.java	2018-12-15 19:06:10.332216700 +0100
++++ src/game/java/com/cairn4/moonbase/ItemDataSet.java	2018-12-15 20:04:00.427559600 +0100
+@@ -3,5 +3,5 @@ package com.cairn4.moonbase;
+ import java.util.ArrayList;
+ 
+ public class ItemDataSet {
+-   public ArrayList itemDataList = new ArrayList();
++   public ArrayList<ItemData> itemDataList = new ArrayList();
+ }
+diff -rupb -B game/decompiled-0.46.1/moonbase/ItemFactory.java src/game/java/com/cairn4/moonbase/ItemFactory.java
+--- game/decompiled-0.46.1/moonbase/ItemFactory.java	2018-12-15 19:06:10.341214000 +0100
++++ src/game/java/com/cairn4/moonbase/ItemFactory.java	2018-12-15 21:43:50.090921100 +0100
+@@ -3,12 +3,15 @@ package com.cairn4.moonbase;
+ import com.badlogic.gdx.Gdx;
+ import com.badlogic.gdx.files.FileHandle;
+ import com.badlogic.gdx.utils.Json;
++import com.cairn4.moonbase.worlddata.InventoryItemData;
++import eu.foxiemods.mewnloader.tools.ItemsLoader;
++
+ import java.util.ArrayList;
+ import java.util.Iterator;
+ 
+ public class ItemFactory {
+    private static ItemFactory instance;
+-   public static ArrayList ITEMDATALIST = new ArrayList();
++   public static ArrayList<ItemData> ITEMDATALIST = new ArrayList();
+ 
+    public static synchronized ItemFactory getInstance() {
+       if (instance == null) {
+@@ -19,7 +22,7 @@ public class ItemFactory {
+    }
+ 
+    private ItemFactory() {
+-      FileHandle itemDataFile = Gdx.files.local(MoonBase.coreFolder + "items.json");
++      FileHandle itemDataFile = Gdx.files.internal(MoonBase.coreFolder + "items.json");
+       if (!itemDataFile.exists()) {
+          Gdx.app.error("MewnBase", "ItemFactory: .json file does not exist");
+       } else {
+@@ -29,6 +32,7 @@ public class ItemFactory {
+          ItemDataSet itemDataSet = (ItemDataSet)json.fromJson(ItemDataSet.class, fileText);
+          ITEMDATALIST = itemDataSet.itemDataList;
+          Gdx.app.debug("MewnBase", "ItemFactory: list size: " + itemDataSet.itemDataList.size());
++         ITEMDATALIST.addAll(ItemsLoader.ITEMDATALIST);
+       }
+ 
+    }
+@@ -112,7 +116,7 @@ public class ItemFactory {
+       return data;
+    }
+ 
+-   public ArrayList getCraftingBonus(String id) {
++   public ArrayList<InventoryItemData> getCraftingBonus(String id) {
+       Iterator var2 = ITEMDATALIST.iterator();
+ 
+       ItemData i;
+diff -rupb -B game/decompiled-0.46.1/moonbase/MoonBase.java src/game/java/com/cairn4/moonbase/MoonBase.java
+--- game/decompiled-0.46.1/moonbase/MoonBase.java	2018-12-15 19:06:10.417190300 +0100
++++ src/game/java/com/cairn4/moonbase/MoonBase.java	2018-12-15 20:14:35.699852700 +0100
+@@ -1,5 +1,6 @@
+ package com.cairn4.moonbase;
+ 
++import com.badlogic.gdx.Application;
+ import com.badlogic.gdx.Game;
+ import com.badlogic.gdx.Gdx;
+ import com.badlogic.gdx.Graphics.DisplayMode;
+@@ -16,6 +17,7 @@ import com.badlogic.gdx.graphics.g2d.Tex
+ import com.badlogic.gdx.utils.GdxRuntimeException;
+ import com.cairn4.moonbase.ui.Splash;
+ import com.strongjoshua.console.Console;
++import eu.foxiemods.mewnloader.MewnLoader;
+ 
+ public class MoonBase extends Game {
+    public static final int SAVE_DATA_VERSION = 5;
+@@ -71,6 +73,8 @@ public class MoonBase extends Game {
+          Gdx.gl.glClearColor(this.clearColor.r, this.clearColor.g, this.clearColor.b, this.clearColor.a);
+          SettingsLoader.getInstance();
+          this.loadDisplaySetings();
++         Gdx.app.setLogLevel(Application.LOG_DEBUG);
++         MewnLoader.init();
+          this.loadFrontendAssets();
+          ShaderHelper.load();
+          cursorNormal = Gdx.graphics.newCursor(new Pixmap(Gdx.files.internal("cursor-normal.png")), 5, 5);
+diff -rupb -B game/decompiled-0.46.1/moonbase/Player.java src/game/java/com/cairn4/moonbase/Player.java
+--- game/decompiled-0.46.1/moonbase/Player.java	2018-12-15 19:06:10.455179100 +0100
++++ src/game/java/com/cairn4/moonbase/Player.java	2018-12-15 20:04:00.446553800 +0100
+@@ -242,8 +242,6 @@ public class Player extends Observable {
+       this.footLight.attachToBody(this.body);
+       this.footLight.setIgnoreAttachedBody(true);
+       this.footLight.setXray(true);
+-      short lightMask = true;
+-      short zero = false;
+       this.spineActor = new SpineActor("player", 0.27F, world.gameScreen.skeletonRenderer);
+       this.spineActor.setPosition(0.0F, 0.0F);
+       this.group.addActor(this.spineActor);
+@@ -329,20 +327,30 @@ public class Player extends Observable {
+       Gdx.app.log("MoonBase", "Player: Playing exit lander anim");
+       this.spineActor.state.setAnimation(0, "exit_lander", false);
+       this.spineActor.state.addListener(new AnimationStateListener() {
+-         public void event(int trackIndex, Event event) {
++         public void event(AnimationState.TrackEntry trackIndex, Event event) {
+          }
+ 
+-         public void complete(int trackIndex, int loopCount) {
++         public void complete(AnimationState.TrackEntry trackIndex) {
+             Player.this.world.gameScreen.gameLoader.autoSave(Player.this.world);
+             Player.this.world.gameState = World.GameStates.playing;
+             Player.this.world.gameScreen.hud.activate(Player.this.world);
+             Player.this.spineActor.state.clearListeners();
+          }
+ 
+-         public void start(int trackIndex) {
++         public void start(AnimationState.TrackEntry trackIndex) {
+          }
+ 
+-         public void end(int trackIndex) {
++         @Override
++         public void interrupt(AnimationState.TrackEntry entry) {
++
++         }
++
++         public void end(AnimationState.TrackEntry trackIndex) {
++         }
++
++         @Override
++         public void dispose(AnimationState.TrackEntry entry) {
++
+          }
+       });
+    }
+diff -rupb -B game/decompiled-0.46.1/moonbase/PlayerInventory.java src/game/java/com/cairn4/moonbase/PlayerInventory.java
+--- game/decompiled-0.46.1/moonbase/PlayerInventory.java	2018-12-15 19:06:10.492167700 +0100
++++ src/game/java/com/cairn4/moonbase/PlayerInventory.java	2018-12-15 20:04:00.453551200 +0100
+@@ -12,7 +12,7 @@ import java.util.Iterator;
+ public class PlayerInventory {
+    public static final int MAX_ITEMS = 12;
+    private Player player;
+-   public ArrayList itemList = new ArrayList();
++   public ArrayList<ItemStack> itemList = new ArrayList();
+    private int selectedIndex;
+    public BuildingPlacementCursor.ORIENTATIONS placementOrientation;
+ 
+diff -rupb -B game/decompiled-0.46.1/moonbase/PlayerStatus.java src/game/java/com/cairn4/moonbase/PlayerStatus.java
+--- game/decompiled-0.46.1/moonbase/PlayerStatus.java	2018-12-15 19:06:10.502164900 +0100
++++ src/game/java/com/cairn4/moonbase/PlayerStatus.java	2018-12-15 21:43:50.134905900 +0100
+@@ -110,7 +110,7 @@ public class PlayerStatus {
+    }
+ 
+    private void load() {
+-      FileHandle file = Gdx.files.local(MoonBase.coreFolder + "suit_upgrades.json");
++      FileHandle file = Gdx.files.internal(MoonBase.coreFolder + "suit_upgrades.json");
+       if (!file.exists()) {
+          Gdx.app.error("MewnBase", "PlayerStatus: suit_upgrades.json does not exist");
+       }
+diff -rupb -B game/decompiled-0.46.1/moonbase/RespawningItemDropper.java src/game/java/com/cairn4/moonbase/RespawningItemDropper.java
+--- game/decompiled-0.46.1/moonbase/RespawningItemDropper.java	2018-12-15 19:06:10.543152100 +0100
++++ src/game/java/com/cairn4/moonbase/RespawningItemDropper.java	2018-12-15 20:04:00.458549900 +0100
+@@ -12,7 +12,7 @@ import com.cairn4.moonbase.worlddata.Res
+ import java.util.ArrayList;
+ import java.util.Iterator;
+ 
+-class RespawningItemDropper {
++public class RespawningItemDropper {
+    private World world;
+    boolean readyToRemove = false;
+    String dropperId;
+diff -rupb -B game/decompiled-0.46.1/moonbase/techtree/TechManager.java src/game/java/com/cairn4/moonbase/techtree/TechManager.java
+--- game/decompiled-0.46.1/moonbase/techtree/TechManager.java	2018-12-15 19:06:10.632512000 +0100
++++ src/game/java/com/cairn4/moonbase/techtree/TechManager.java	2018-12-15 21:43:12.414412400 +0100
+@@ -25,7 +25,7 @@ public class TechManager extends Observa
+    }
+ 
+    private void load() {
+-      this.techTreeData = Gdx.files.local("techTree.json");
++      this.techTreeData = Gdx.files.internal("techTree.json");
+       if (!this.techTreeData.exists()) {
+          Gdx.app.error("MewnBase", "TechManager: techTree.json does not exist");
+       }
+@@ -106,7 +106,7 @@ public class TechManager extends Observa
+       return t;
+    }
+ 
+-   public ArrayList getSaveData() {
++   public ArrayList<TechUpgrade> getSaveData() {
+       ArrayList unlocked = new ArrayList();
+       Iterator var2 = this.techTree.upgrades.iterator();
+ 
+diff -rupb -B game/decompiled-0.46.1/moonbase/techtree/TechTree.java src/game/java/com/cairn4/moonbase/techtree/TechTree.java
+--- game/decompiled-0.46.1/moonbase/techtree/TechTree.java	2018-12-15 19:06:10.638509000 +0100
++++ src/game/java/com/cairn4/moonbase/techtree/TechTree.java	2018-12-15 20:04:00.469545800 +0100
+@@ -3,5 +3,5 @@ package com.cairn4.moonbase.techtree;
+ import java.util.ArrayList;
+ 
+ public class TechTree {
+-   public ArrayList upgrades;
++   public ArrayList<TechUpgrade> upgrades;
+ }
+diff -rupb -B game/decompiled-0.46.1/moonbase/techtree/TechUpgrade.java src/game/java/com/cairn4/moonbase/techtree/TechUpgrade.java
+--- game/decompiled-0.46.1/moonbase/techtree/TechUpgrade.java	2018-12-15 19:06:10.643507400 +0100
++++ src/game/java/com/cairn4/moonbase/techtree/TechUpgrade.java	2018-12-15 20:04:00.474544100 +0100
+@@ -6,6 +6,6 @@ public class TechUpgrade {
+    public String id;
+    public boolean unlocked = false;
+    public int cost;
+-   public ArrayList preReqTech = new ArrayList();
++   public ArrayList<String> preReqTech = new ArrayList();
+    public int suitLevel;
+ }
+diff -rupb -B game/decompiled-0.46.1/moonbase/TerrainGen.java src/game/java/com/cairn4/moonbase/TerrainGen.java
+--- game/decompiled-0.46.1/moonbase/TerrainGen.java	2018-12-15 19:06:10.652504800 +0100
++++ src/game/java/com/cairn4/moonbase/TerrainGen.java	2018-12-15 20:14:35.743838000 +0100
+@@ -9,12 +9,13 @@ import com.cairn4.moonbase.tiles.GroundT
+ import com.cairn4.moonbase.worlddata.ItemDropperData;
+ import com.cairn4.moonbase.worlddata.ItemDropperFactory;
+ import com.cairn4.moonbase.worlddata.ItemDropperSpawnBiome;
++import jMapGen.Point;
++import za.co.luma.math.sampling.Sampler;
++import za.co.luma.math.sampling.UniformPoissonDiskSampler;
++
+ import java.util.ArrayList;
+ import java.util.Iterator;
+ import java.util.List;
+-import za.co.luma.geom.Vector2DDouble;
+-import za.co.luma.math.sampling.Sampler;
+-import za.co.luma.math.sampling.UniformPoissonDiskSampler;
+ 
+ public class TerrainGen {
+    private SimplexNoise simplexNoise;
+@@ -30,7 +31,7 @@ public class TerrainGen {
+    private static final int minDistBetweenResearchObjects = 18;
+    Array chunkCoords = new Array();
+    public static Color[] groundColors = new Color[]{new Color(1.0F, 1.0F, 1.0F, 1.0F), new Color(1.0F, 0.97F, 0.921F, 1.0F), new Color(1.0F, 0.905F, 0.819F, 1.0F), new Color(0.925F, 0.827F, 0.8F, 1.0F)};
+-   public ArrayList samplePoints = new ArrayList();
++   public ArrayList<GridPoint2> samplePoints = new ArrayList();
+ 
+    public TerrainGen(World world) {
+       this.world = world;
+@@ -46,12 +47,12 @@ public class TerrainGen {
+ 
+       this.chunkCoords.shuffle();
+       Sampler sampler = new UniformPoissonDiskSampler(0.0D, 0.0D, 1000.0D, 1000.0D, 18.0D);
+-      List pointList = sampler.sample();
++      List<Point> pointList = sampler.sample();
+       Gdx.app.log("MewnBase", "TerrainGen: research objects : " + pointList.size());
+-      Iterator var4 = pointList.iterator();
++      Iterator<Point> var4 = pointList.iterator();
+ 
+       while(var4.hasNext()) {
+-         Vector2DDouble v = (Vector2DDouble)var4.next();
++         Point v = var4.next();
+          this.samplePoints.add(new GridPoint2((int)v.x, (int)v.y));
+       }
+ 
+diff -rupb -B game/decompiled-0.46.1/moonbase/tiles/Airlock.java src/game/java/com/cairn4/moonbase/tiles/Airlock.java
+--- game/decompiled-0.46.1/moonbase/tiles/Airlock.java	2018-12-15 19:06:10.711487100 +0100
++++ src/game/java/com/cairn4/moonbase/tiles/Airlock.java	2018-12-15 20:07:08.999379200 +0100
+@@ -37,7 +37,7 @@ public class Airlock extends HabitatModu
+       return this.outerDoorDirection;
+    }
+ 
+-   public Airlock(World world, Chunk chunk, int x, int y, BaseModule.ORIENTATIONS o) {
++   public Airlock(World world, Chunk chunk, int x, int y) {
+       super(world, chunk, x, y);
+       this.type = Tile.types.habitat;
+       this.blocker = false;
+@@ -47,11 +47,8 @@ public class Airlock extends HabitatModu
+       this.toggleBehavior = new ToggleBehavior();
+       this.toggleBehavior.on = true;
+       this.behaviorList.add(this.toggleBehavior);
+-      this.setRotation(o);
+       this.updateState();
+       this.interactDuration = 0.5F;
+-      this.updateBases();
+-      this.checkConnectionForOxygen();
+    }
+ 
+    public void startBehaviors() {
+@@ -215,6 +212,7 @@ public class Airlock extends HabitatModu
+       this.wallsGroup.addActor(this.southLight);
+    }
+ 
++   @Override
+    public void setRotation(BaseModule.ORIENTATIONS o) {
+       this.outerDoorDirection = o;
+       switch(this.outerDoorDirection) {
+@@ -239,6 +237,8 @@ public class Airlock extends HabitatModu
+          this.group.setRotation(0.0F);
+       }
+ 
++      this.updateBases();
++
+    }
+ 
+    protected void createDrawables() {
+diff -rupb -B game/decompiled-0.46.1/moonbase/tiles/AutoAirlock.java src/game/java/com/cairn4/moonbase/tiles/AutoAirlock.java
+--- game/decompiled-0.46.1/moonbase/tiles/AutoAirlock.java	2018-12-15 19:06:10.718484800 +0100
++++ src/game/java/com/cairn4/moonbase/tiles/AutoAirlock.java	2018-12-15 20:07:09.006377100 +0100
+@@ -13,8 +13,8 @@ import com.cairn4.moonbase.tiles.behavio
+ public class AutoAirlock extends Airlock {
+    StepTrigger stepTrigger;
+ 
+-   public AutoAirlock(World world, Chunk chunk, int x, int y, BaseModule.ORIENTATIONS o) {
+-      super(world, chunk, x, y, o);
++   public AutoAirlock(World world, Chunk chunk, int x, int y) {
++      super(world, chunk, x, y);
+       this.powerDrawRate = 4.0F;
+       this.stepTrigger = new StepTrigger();
+       this.stepTrigger.baseModule = this;
+diff -rupb -B game/decompiled-0.46.1/moonbase/tiles/behaviors/DropItemOnBaseBehavior.java src/game/java/com/cairn4/moonbase/tiles/behaviors/DropItemOnBaseBehavior.java
+--- game/decompiled-0.46.1/moonbase/tiles/behaviors/DropItemOnBaseBehavior.java	2018-12-15 19:06:10.829450400 +0100
++++ src/game/java/com/cairn4/moonbase/tiles/behaviors/DropItemOnBaseBehavior.java	2018-12-15 20:04:00.492538600 +0100
+@@ -9,7 +9,7 @@ import java.util.Iterator;
+ 
+ public class DropItemOnBaseBehavior implements Behavior {
+    public boolean loaded = false;
+-   public ArrayList acceptedItemIds = new ArrayList();
++   public ArrayList<String> acceptedItemIds = new ArrayList();
+    public BaseModule baseModule;
+    public DropItemHint dropItemHint;
+ 
+diff -rupb -B game/decompiled-0.46.1/moonbase/tiles/behaviors/GarageCrafter.java src/game/java/com/cairn4/moonbase/tiles/behaviors/GarageCrafter.java
+--- game/decompiled-0.46.1/moonbase/tiles/behaviors/GarageCrafter.java	2018-12-15 19:06:10.855442400 +0100
++++ src/game/java/com/cairn4/moonbase/tiles/behaviors/GarageCrafter.java	2018-12-15 20:07:09.012374300 +0100
+@@ -13,6 +13,10 @@ public class GarageCrafter extends ItemC
+    int localX;
+    int localY;
+ 
++   public GarageCrafter() {
++      super("garage");
++   }
++
+    public void finishedBuilding() {
+       Gdx.app.log("MewnBase", "GarageCrafter: Done building " + this.getCurrentBuildItem().getName());
+       this.building = false;
+diff -rupb -B game/decompiled-0.46.1/moonbase/tiles/behaviors/GreenHouseItemCrafter.java src/game/java/com/cairn4/moonbase/tiles/behaviors/GreenHouseItemCrafter.java
+--- game/decompiled-0.46.1/moonbase/tiles/behaviors/GreenHouseItemCrafter.java	2018-12-15 19:06:10.862440100 +0100
++++ src/game/java/com/cairn4/moonbase/tiles/behaviors/GreenHouseItemCrafter.java	2018-12-15 20:18:52.996266500 +0100
+@@ -9,17 +10,21 @@ import java.util.ArrayList;
+ import java.util.Iterator;
+ 
+ public class GreenHouseItemCrafter extends ItemCrafter {
++   public GreenHouseItemCrafter() {
++      super("greenhouse");
++   }
++
+    public boolean collectItem() {
+-      ItemStack i = (ItemStack)this.itemsToCollect.get(0);
++      ItemStack i = (ItemStack) this.itemsToCollect.get(0);
+       boolean collected = super.collectItem();
+       if (collected) {
+          ArrayList bonusItemList = ItemFactory.getInstance().getCraftingBonus(i.getId());
+          Iterator var4 = bonusItemList.iterator();
+ 
+-         while(var4.hasNext()) {
+-            InventoryItemData iid = (InventoryItemData)var4.next();
++         while (var4.hasNext()) {
++            InventoryItemData iid = (InventoryItemData) var4.next();
+ 
+-            for(int count = 0; count < iid.amount; ++count) {
++            for (int count = 0; count < iid.amount; ++count) {
+                Item newItem = ItemFactory.getInstance().createItem(iid.itemId);
+                new ItemPickup(this.baseModule.world, this.baseModule.chunk, this.baseModule.getWorldXPos(), this.baseModule.getWorldYPos(), newItem);
+             }
+diff -rupb -B game/decompiled-0.46.1/moonbase/tiles/behaviors/ItemCrafter.java src/game/java/com/cairn4/moonbase/tiles/behaviors/ItemCrafter.java
+--- game/decompiled-0.46.1/moonbase/tiles/behaviors/ItemCrafter.java	2018-12-15 19:06:10.887432600 +0100
++++ src/game/java/com/cairn4/moonbase/tiles/behaviors/ItemCrafter.java	2018-12-15 20:07:09.033368100 +0100
+@@ -17,6 +17,8 @@ import com.cairn4.moonbase.World;
+ import com.cairn4.moonbase.tiles.BaseModule;
+ import com.cairn4.moonbase.ui.Localization;
+ import com.cairn4.moonbase.worlddata.BehaviorData;
++import eu.foxiemods.mewnloader.tools.CraftingRegistry;
++
+ import java.util.ArrayList;
+ import java.util.Iterator;
+ import java.util.Observable;
+@@ -27,9 +29,9 @@ public class ItemCrafter extends Observa
+    public boolean requirePowerToCraft;
+    public boolean requireOxygenToCraft;
+    public boolean requireWaterToCraft;
+-   public ArrayList buildables = new ArrayList();
++   public CraftingRegistry registry;
+    public boolean building;
+-   public Array itemsToCollect = new Array();
++   public Array<ItemStack> itemsToCollect = new Array();
+    public Player player;
+    public PlayerInventory playerInventory;
+    public Array spentItemBufferList = new Array();
+@@ -40,6 +42,10 @@ public class ItemCrafter extends Observa
+    public String lastSelectedItemId = "";
+    public float buildSpeedMultiplier = 1.0F;
+ 
++   public ItemCrafter(String name) {
++      registry = CraftingRegistry.getCraftingRegistry(name);
++   }
++
+    public boolean isBuilding() {
+       return this.building;
+    }
+@@ -131,11 +137,12 @@ public class ItemCrafter extends Observa
+    }
+ 
+    public void addBuildable(String itemId) {
+-      this.buildables.add(itemId);
++      if(!this.registry.buildables.contains(itemId))
++         this.registry.buildables.add(itemId);
+    }
+ 
+    public ArrayList getBuildables() {
+-      return this.buildables;
++      return this.registry.buildables;
+    }
+ 
+    public ItemData getBuildableItem(String id) {
+@@ -155,7 +162,7 @@ public class ItemCrafter extends Observa
+    }
+ 
+    public ItemData getBuildableItem(int index) {
+-      String id = (String)this.buildables.get(index);
++      String id = (String)this.registry.buildables.get(index);
+       ItemFactory.getInstance();
+       Iterator var3 = ItemFactory.ITEMDATALIST.iterator();
+ 
+diff -rupb -B game/decompiled-0.46.1/moonbase/tiles/behaviors/RecyclerItemCrafter.java src/game/java/com/cairn4/moonbase/tiles/behaviors/RecyclerItemCrafter.java
+--- game/decompiled-0.46.1/moonbase/tiles/behaviors/RecyclerItemCrafter.java	2018-12-15 19:06:10.943415200 +0100
++++ src/game/java/com/cairn4/moonbase/tiles/behaviors/RecyclerItemCrafter.java	2018-12-15 20:07:09.041365500 +0100
+@@ -3,10 +3,14 @@ package com.cairn4.moonbase.tiles.behavi
+ import com.cairn4.moonbase.ItemStack;
+ 
+ public class RecyclerItemCrafter extends ItemCrafter {
++   public RecyclerItemCrafter() {
++      super("recycler");
++   }
+    public boolean collectItem() {
+       ItemStack i = (ItemStack)this.itemsToCollect.get(0);
+       boolean collected = super.collectItem();
+       if (collected) {
++         ;
+       }
+ 
+       return collected;
+diff -rupb -B game/decompiled-0.46.1/moonbase/tiles/Conduit.java src/game/java/com/cairn4/moonbase/tiles/Conduit.java
+--- game/decompiled-0.46.1/moonbase/tiles/Conduit.java	2018-12-15 19:06:11.017394600 +0100
++++ src/game/java/com/cairn4/moonbase/tiles/Conduit.java	2018-12-15 20:04:00.504535000 +0100
+@@ -44,10 +44,6 @@ public class Conduit extends BaseModule
+       Tile south = this.world.getTile(this.worldX, this.worldY - 1);
+       Tile east = this.world.getTile(this.worldX + 1, this.worldY);
+       Tile west = this.world.getTile(this.worldX - 1, this.worldY);
+-      int S = false;
+-      int E = false;
+-      int N = false;
+-      int W = false;
+       int N = this.checkTile(north, 4);
+       int S = this.checkTile(south, 1);
+       int E = this.checkTile(east, 2);
+diff -rupb -B game/decompiled-0.46.1/moonbase/tiles/ConstructionYard.java src/game/java/com/cairn4/moonbase/tiles/ConstructionYard.java
+--- game/decompiled-0.46.1/moonbase/tiles/ConstructionYard.java	2018-12-15 19:06:11.024391100 +0100
++++ src/game/java/com/cairn4/moonbase/tiles/ConstructionYard.java	2018-12-15 20:07:09.047362700 +0100
+@@ -31,7 +31,7 @@ public class ConstructionYard extends Ba
+       this.world.gameScreen.topGroup.addActor(this.buildingParticles);
+       this.buildParticlesOn = false;
+       this.toggleCraftingFx(false);
+-      this.itemCrafter = new ItemCrafter();
++      this.itemCrafter = new ItemCrafter("construction-yard");
+       this.itemCrafter.baseModule = this;
+       this.itemCrafter.addBuildable("habitat-builder");
+       this.itemCrafter.addBuildable("aircleaner-builder");
+diff -rupb -B game/decompiled-0.46.1/moonbase/tiles/CraftingStation.java src/game/java/com/cairn4/moonbase/tiles/CraftingStation.java
+--- game/decompiled-0.46.1/moonbase/tiles/CraftingStation.java	2018-12-15 19:06:11.033388800 +0100
++++ src/game/java/com/cairn4/moonbase/tiles/CraftingStation.java	2018-12-15 20:07:09.055360700 +0100
+@@ -16,7 +16,7 @@ public class CraftingStation extends Bas
+    Player player;
+    PlayerInventory playerInventory;
+    private Image buildFinishedIcon;
+-   private ItemCrafter itemCrafter = new ItemCrafter();
++   private ItemCrafter itemCrafter = new ItemCrafter("crafting-station");
+    protected Color lightOnColor = new Color(0.25F, 0.25F, 0.25F, 0.3F);
+ 
+    public CraftingStation(World world, Chunk chunk, int x, int y) {
+diff -rupb -B game/decompiled-0.46.1/moonbase/tiles/GroundTile.java src/game/java/com/cairn4/moonbase/tiles/GroundTile.java
+--- game/decompiled-0.46.1/moonbase/tiles/GroundTile.java	2018-12-15 19:06:11.130866300 +0100
++++ src/game/java/com/cairn4/moonbase/tiles/GroundTile.java	2018-12-15 20:04:00.510533100 +0100
+@@ -123,7 +123,6 @@ public class GroundTile implements Poola
+       case sand:
+          this.spriteName = "test/sand-15";
+          float rS = MathUtils.random();
+-         int rAlt;
+          if (rS > 0.4F && rS <= 0.9F) {
+             rAlt = MathUtils.random(1, 3);
+             this.spriteName = this.spriteName + "-alt" + rAlt;
+@@ -136,7 +135,7 @@ public class GroundTile implements Poola
+          this.spriteName = "test/rock-15";
+          float r2 = MathUtils.random();
+          if (r2 > 0.7F) {
+-            int rAlt = MathUtils.random(1, 2);
++            rAlt = MathUtils.random(1, 2);
+             this.spriteName = this.spriteName + "-alt" + rAlt;
+          }
+       }
+@@ -156,10 +155,6 @@ public class GroundTile implements Poola
+       GroundTile northWest = this.world.getGroundTile(this.worldX - 1, this.worldY + 1);
+       GroundTile southEast = this.world.getGroundTile(this.worldX + 1, this.worldY - 1);
+       GroundTile southWest = this.world.getGroundTile(this.worldX - 1, this.worldY - 1);
+-      int bSW = true;
+-      int bSE = true;
+-      int bNE = true;
+-      int bNW = true;
+       int SW = 0;
+       int SE = 0;
+       int NE = 0;
+diff -rupb -B game/decompiled-0.46.1/moonbase/tiles/ItemDropper.java src/game/java/com/cairn4/moonbase/tiles/ItemDropper.java
+--- game/decompiled-0.46.1/moonbase/tiles/ItemDropper.java	2018-12-15 19:06:11.150864600 +0100
++++ src/game/java/com/cairn4/moonbase/tiles/ItemDropper.java	2018-12-15 20:18:53.138220900 +0100
+@@ -8,27 +8,14 @@ import com.badlogic.gdx.math.MathUtils;
+ import com.badlogic.gdx.scenes.scene2d.Group;
+ import com.badlogic.gdx.scenes.scene2d.actions.Actions;
+ import com.badlogic.gdx.utils.Array;
+-import com.cairn4.moonbase.AssetManagerSingleton;
+-import com.cairn4.moonbase.Chunk;
+-import com.cairn4.moonbase.Item;
+-import com.cairn4.moonbase.ItemFactory;
+-import com.cairn4.moonbase.ItemPickup;
+-import com.cairn4.moonbase.ItemStack;
+-import com.cairn4.moonbase.ParticleActor;
+-import com.cairn4.moonbase.Player;
+-import com.cairn4.moonbase.SpineActor;
+-import com.cairn4.moonbase.World;
++import com.cairn4.moonbase.*;
+ import com.cairn4.moonbase.tiles.behaviors.Behavior;
+ import com.cairn4.moonbase.tiles.behaviors.CooldownTimer;
+ import com.cairn4.moonbase.ui.Localization;
+-import com.cairn4.moonbase.worlddata.InventoryItemData;
+-import com.cairn4.moonbase.worlddata.ItemDropperData;
+-import com.cairn4.moonbase.worlddata.ItemDropperFactory;
+-import com.cairn4.moonbase.worlddata.ItemDropperItemData;
+-import com.cairn4.moonbase.worlddata.TileInteractData;
+-import com.cairn4.moonbase.worlddata.TileInteractionAction;
++import com.cairn4.moonbase.worlddata.*;
+ import com.esotericsoftware.spine.AnimationState;
+ import com.esotericsoftware.spine.AnimationState.AnimationStateAdapter;
++
+ import java.util.Iterator;
+ 
+ public class ItemDropper extends Tile {
+@@ -42,6 +29,10 @@ public class ItemDropper extends Tile {
+    CooldownTimer transformCooldownTimer;
+    public TileInteractData currentPlayerInteractionData;
+ 
++   public ItemDropper(World world, Chunk chunk, TileData data) {
++      this(world, chunk, data.x, data.y, data.itemDropperId);
++   }
++
+    public ItemDropper(World world, Chunk chunk, int x, int y, String itemDropperId) {
+       this(world, chunk, x, y, ItemDropperFactory.getInstance().getItemDropperData(itemDropperId));
+    }
+diff -rupb -B game/decompiled-0.46.1/moonbase/tiles/ItemPile.java src/game/java/com/cairn4/moonbase/tiles/ItemPile.java
+--- game/decompiled-0.46.1/moonbase/tiles/ItemPile.java	2018-12-15 19:06:11.157861800 +0100
++++ src/game/java/com/cairn4/moonbase/tiles/ItemPile.java	2018-12-15 20:07:09.072354400 +0100
+@@ -15,6 +15,7 @@ import com.cairn4.moonbase.ParticleActor
+ import com.cairn4.moonbase.Player;
+ import com.cairn4.moonbase.World;
+ import com.cairn4.moonbase.ui.Localization;
++import com.cairn4.moonbase.worlddata.TileData;
+ 
+ public class ItemPile extends Tile {
+    ItemStack itemStack;
+@@ -25,6 +26,10 @@ public class ItemPile extends Tile {
+    private float baseXPos = 0.0F;
+    private float riskAnimOffset = (float)MathUtils.random(0, 3);
+ 
++   public ItemPile(World world, Chunk chunk, TileData data) {
++      this(world, chunk, data.x, data.y, new ItemStack(ItemFactory.getInstance().createItem(data.itemId)));
++   }
++
+    public ItemPile(World world, Chunk chunk, int x, int y, ItemStack itemStack) {
+       super(world, chunk, x, y);
+       this.type = Tile.types.pile;
+diff -rupb -B game/decompiled-0.46.1/moonbase/tiles/ProtoBase.java src/game/java/com/cairn4/moonbase/tiles/ProtoBase.java
+--- game/decompiled-0.46.1/moonbase/tiles/ProtoBase.java	2018-12-15 19:06:11.213843700 +0100
++++ src/game/java/com/cairn4/moonbase/tiles/ProtoBase.java	2018-12-15 20:07:09.080352100 +0100
+@@ -7,8 +7,11 @@ import com.cairn4.moonbase.World;
+ import com.cairn4.moonbase.tiles.behaviors.ProtoBaseBehavior;
+ import com.cairn4.moonbase.ui.BuildingPlacementCursor;
+ import com.cairn4.moonbase.ui.TileProgressBar;
++import eu.foxiemods.mewnloader.tools.TileRegistry;
++
+ import java.lang.reflect.Constructor;
+ import java.lang.reflect.InvocationTargetException;
++import java.lang.reflect.Method;
+ 
+ public class ProtoBase extends BaseModule {
+    public ProtoBaseBehavior protoBaseBehavior = new ProtoBaseBehavior();
+@@ -97,20 +100,17 @@ public class ProtoBase extends BaseModul
+       Object object = null;
+       Class[] classArgs;
+       Object[] arguments;
+-      if (!this.protoBaseBehavior.base.equals("Airlock") && !this.protoBaseBehavior.base.equals("AutoAirlock") && !this.protoBaseBehavior.base.equals("WallLight")) {
+          classArgs = new Class[]{World.class, Chunk.class, Integer.TYPE, Integer.TYPE};
+-         arguments = new Object[]{this.chunk.world, this.chunk, new Integer(this.x), new Integer(this.y)};
+-      } else {
+-         classArgs = new Class[]{World.class, Chunk.class, Integer.TYPE, Integer.TYPE, BaseModule.ORIENTATIONS.class};
+          BaseModule.ORIENTATIONS orientation = BaseModule.ORIENTATIONS.valueOf(this.protoBaseBehavior.orientation.toString());
+-         arguments = new Object[]{this.chunk.world, this.chunk, new Integer(this.x), new Integer(this.y), orientation};
+-      }
++      arguments = new Object[]{this.chunk.world, this.chunk, new Integer(this.x), new Integer(this.y)};
+ 
+       try {
+-         Class aClass = Class.forName("com.cairn4.moonbase.tiles." + this.protoBaseBehavior.base);
++         Class aClass = TileRegistry.getTileByName(this.protoBaseBehavior.base);
+          Constructor constructor = null;
+          constructor = aClass.getConstructor(classArgs);
+-         constructor.newInstance(arguments);
++         object = constructor.newInstance(arguments);
++         Method method = aClass.getMethod("setRotation", ORIENTATIONS.class);
++         method.invoke(object, orientation);
+          Audio.getInstance().playSound("sounds/interact_hit2.ogg", 1.0F, 0.6F);
+       } catch (InstantiationException var6) {
+          System.out.println(var6);
+@@ -121,8 +121,6 @@ public class ProtoBase extends BaseModul
+          var8.printStackTrace();
+       } catch (NoSuchMethodException var9) {
+          var9.printStackTrace();
+-      } catch (ClassNotFoundException var10) {
+-         var10.printStackTrace();
+       }
+ 
+       System.out.println("Creating new base module at " + this.x + ", " + this.y);
+diff -rupb -B game/decompiled-0.46.1/moonbase/tiles/Recycler.java src/game/java/com/cairn4/moonbase/tiles/Recycler.java
+--- game/decompiled-0.46.1/moonbase/tiles/Recycler.java	2018-12-15 19:06:11.229838800 +0100
++++ src/game/java/com/cairn4/moonbase/tiles/Recycler.java	2018-12-15 20:07:09.088349200 +0100
+@@ -31,7 +31,7 @@ public class Recycler extends BaseModule
+       this.powerGenRate = 0.0F;
+       this.setupPhysics("smelter");
+       this.addSmoke();
+-      this.itemCrafter = new ItemCrafter();
++      this.itemCrafter = new ItemCrafter("recycler");
+       this.itemCrafter.buildQueueSizeLimit = 1;
+       this.itemCrafter.addBuildable("metal");
+       this.itemCrafter.baseModule = this;
+diff -rupb -B game/decompiled-0.46.1/moonbase/tiles/RepairDroneBase.java src/game/java/com/cairn4/moonbase/tiles/RepairDroneBase.java
+--- game/decompiled-0.46.1/moonbase/tiles/RepairDroneBase.java	2018-12-15 19:06:11.244835000 +0100
++++ src/game/java/com/cairn4/moonbase/tiles/RepairDroneBase.java	2018-12-15 20:04:00.516531300 +0100
+@@ -88,7 +88,7 @@ public class RepairDroneBase extends Bas
+       }
+ 
+       final GridPoint2 baseCoord = new GridPoint2(this.worldX, this.worldY);
+-      Collections.sort(this.basesWithDisasters, new Comparator() {
++      Collections.sort(this.basesWithDisasters, new Comparator<BaseModule>() {
+          public int compare(BaseModule base1, BaseModule base2) {
+             float dist1 = baseCoord.dst(new GridPoint2(base1.worldX, base1.worldY));
+             float dist2 = baseCoord.dst(new GridPoint2(base2.worldX, base2.worldY));
+diff -rupb -B game/decompiled-0.46.1/moonbase/tiles/ResearchObject.java src/game/java/com/cairn4/moonbase/tiles/ResearchObject.java
+--- game/decompiled-0.46.1/moonbase/tiles/ResearchObject.java	2018-12-15 19:06:11.251834000 +0100
++++ src/game/java/com/cairn4/moonbase/tiles/ResearchObject.java	2018-12-15 20:07:09.093349400 +0100
+@@ -11,10 +11,15 @@ import com.cairn4.moonbase.World;
+ import com.cairn4.moonbase.tiles.behaviors.ResearchDropperBehavior;
+ import com.cairn4.moonbase.worlddata.ItemDropperData;
+ import com.cairn4.moonbase.worlddata.ItemDropperFactory;
++import com.cairn4.moonbase.worlddata.TileData;
+ 
+ public class ResearchObject extends ItemDropper {
+    public ResearchDropperBehavior researchDropperBehavior;
+ 
++   public ResearchObject(World world, Chunk chunk, TileData data) {
++      this(world, chunk, data.x, data.y, data.itemDropperId);
++   }
++
+    public ResearchObject(World world, Chunk chunk, int x, int y, String itemDropperId) {
+       this(world, chunk, x, y, ItemDropperFactory.getInstance().getItemDropperData(itemDropperId));
+    }
+diff -rupb -B game/decompiled-0.46.1/moonbase/tiles/Smelter.java src/game/java/com/cairn4/moonbase/tiles/Smelter.java
+--- game/decompiled-0.46.1/moonbase/tiles/Smelter.java	2018-12-15 19:06:11.273825500 +0100
++++ src/game/java/com/cairn4/moonbase/tiles/Smelter.java	2018-12-15 20:07:09.100346400 +0100
+@@ -33,7 +33,7 @@ public class Smelter extends BaseModule
+       this.powerGenRate = 0.0F;
+       this.setupPhysics("smelter");
+       this.addSmoke();
+-      this.itemCrafter = new ItemCrafter();
++      this.itemCrafter = new ItemCrafter("smelter");
+       this.itemCrafter.addBuildable("metal");
+       this.itemCrafter.addBuildable("metal-beam");
+       this.itemCrafter.addBuildable("refined-scrap");
+diff -rupb -B game/decompiled-0.46.1/moonbase/tiles/Tile.java src/game/java/com/cairn4/moonbase/tiles/Tile.java
+--- game/decompiled-0.46.1/moonbase/tiles/Tile.java	2018-12-15 19:06:11.318812300 +0100
++++ src/game/java/com/cairn4/moonbase/tiles/Tile.java	2018-12-15 20:07:09.106343600 +0100
+@@ -17,6 +17,8 @@ import com.cairn4.moonbase.Player;
+ import com.cairn4.moonbase.World;
+ import com.cairn4.moonbase.tiles.behaviors.Behavior;
+ import com.cairn4.moonbase.worlddata.BehaviorData;
++import com.cairn4.moonbase.worlddata.TileData;
++
+ import java.lang.reflect.Field;
+ import java.util.ArrayList;
+ import java.util.Iterator;
+@@ -25,7 +27,7 @@ import java.util.Map.Entry;
+ public class Tile {
+    public static final float PICK_UP_TIME = 1.0F;
+    protected float pickupTimer;
+-   public ArrayList behaviorList = new ArrayList();
++   public ArrayList<Behavior> behaviorList = new ArrayList();
+    public Tile.types type;
+    protected short categoryBits;
+    protected short maskBits;
+@@ -435,6 +437,11 @@ public class Tile {
+       return this.walkSoundFx != null ? this.walkSoundFx : null;
+    }
+ 
++   /***** ADDED BY MEWNBASE MODDED LOADER ******/
++   public void setRotation(BaseModule.ORIENTATIONS o) {
++
++   }
++
+    static {
+       GRID_SIZE = 256.0F * SCALE;
+       TILE_SIZE = 256.0F * SCALE;
+diff -rupb -B game/decompiled-0.46.1/moonbase/tiles/TileFactory.java src/game/java/com/cairn4/moonbase/tiles/TileFactory.java
+--- game/decompiled-0.46.1/moonbase/tiles/TileFactory.java	2018-12-15 19:06:11.328809200 +0100
++++ src/game/java/com/cairn4/moonbase/tiles/TileFactory.java	2018-12-15 20:07:09.115341400 +0100
+@@ -2,8 +2,6 @@ package com.cairn4.moonbase.tiles;
+ 
+ import com.badlogic.gdx.Gdx;
+ import com.cairn4.moonbase.Chunk;
+-import com.cairn4.moonbase.ItemFactory;
+-import com.cairn4.moonbase.ItemStack;
+ import com.cairn4.moonbase.World;
+ import com.cairn4.moonbase.worlddata.GroundTileData;
+ import com.cairn4.moonbase.worlddata.TileData;
+@@ -7,15 +5,14 @@ import com.cairn4.moonbase.ItemStack;
+ import com.cairn4.moonbase.World;
+ import com.cairn4.moonbase.worlddata.GroundTileData;
+ import com.cairn4.moonbase.worlddata.TileData;
++
+ import java.lang.reflect.Constructor;
+ import java.lang.reflect.InvocationTargetException;
++import java.lang.reflect.Method;
+ 
+ public class TileFactory {
+    private static TileFactory instance;
+ 
+-   private TileFactory() {
+-   }
+-
+    public static synchronized TileFactory getInstance() {
+       if (instance == null) {
+          instance = new TileFactory();
+@@ -27,36 +24,28 @@ public class TileFactory {
+    public Tile createTile(Chunk chunk, TileData tileData) throws NoSuchFieldException, IllegalAccessException {
+       Gdx.app.debug("MoonBase", "TileFactory: trying to create tile " + tileData.name + " in chunk[" + chunk.chunkX + "," + chunk.chunkY + " - at [" + tileData.x + "," + tileData.y);
+       Object object = null;
+-      Class[] classArgs;
+-      Object[] arguments;
+-      if (tileData.name.equals("com.cairn4.moonbase.tiles.ItemPile")) {
+-         classArgs = new Class[]{World.class, Chunk.class, Integer.TYPE, Integer.TYPE, ItemStack.class};
+-         ItemStack stack = new ItemStack(ItemFactory.getInstance().createItem(tileData.itemId));
+-         arguments = new Object[]{chunk.world, chunk, new Integer(tileData.x), new Integer(tileData.y), stack};
+-      } else if (tileData.name.equals("com.cairn4.moonbase.tiles.ItemDropper")) {
+-         classArgs = new Class[]{World.class, Chunk.class, Integer.TYPE, Integer.TYPE, String.class};
+-         arguments = new Object[]{chunk.world, chunk, new Integer(tileData.x), new Integer(tileData.y), new String(tileData.itemDropperId)};
+-      } else if (tileData.name.equals("com.cairn4.moonbase.tiles.ResearchObject")) {
+-         classArgs = new Class[]{World.class, Chunk.class, Integer.TYPE, Integer.TYPE, String.class};
+-         arguments = new Object[]{chunk.world, chunk, new Integer(tileData.x), new Integer(tileData.y), new String(tileData.itemDropperId)};
+-      } else if (!tileData.name.equals("com.cairn4.moonbase.tiles.Airlock") && !tileData.name.equals("com.cairn4.moonbase.tiles.WallLight") && !tileData.name.equals("com.cairn4.moonbase.tiles.AutoAirlock")) {
+-         classArgs = new Class[]{World.class, Chunk.class, Integer.TYPE, Integer.TYPE};
+-         arguments = new Object[]{chunk.world, chunk, new Integer(tileData.x), new Integer(tileData.y)};
+-      } else {
+-         classArgs = new Class[]{World.class, Chunk.class, Integer.TYPE, Integer.TYPE, BaseModule.ORIENTATIONS.class};
++      BaseModule.ORIENTATIONS orientation = BaseModule.ORIENTATIONS.valueOf("west");
++      Class[] classArgsExt = new Class[]{World.class, Chunk.class, TileData.class};
++      Object[] argumentsExt = new Object[]{chunk.world, chunk, tileData};
++      Class[] classArgsBasic = new Class[]{World.class, Chunk.class, Integer.TYPE, Integer.TYPE};
++      Object[] argumentsBasic = new Object[]{chunk.world, chunk, tileData.x, tileData.y};
++
+          if (tileData.orientation == null) {
+             tileData.orientation = "west";
+          }
+ 
+-         BaseModule.ORIENTATIONS airlockOrientation = BaseModule.ORIENTATIONS.valueOf(tileData.orientation);
+-         arguments = new Object[]{chunk.world, chunk, new Integer(tileData.x), new Integer(tileData.y), airlockOrientation};
+-      }
+-
+       try {
+          Class aClass = Class.forName(tileData.name);
+          Constructor constructor = null;
+-         constructor = aClass.getConstructor(classArgs);
+-         object = constructor.newInstance(arguments);
++         try {
++            constructor = aClass.getConstructor(classArgsExt);
++            object = constructor.newInstance(argumentsExt);
++         } catch(NoSuchMethodException exception) {
++            constructor = aClass.getConstructor(classArgsBasic);
++            object = constructor.newInstance(argumentsBasic);
++         }
++         Method method = aClass.getMethod("setRotation", BaseModule.ORIENTATIONS.class);
++         method.invoke(object, orientation);
+       } catch (InstantiationException var8) {
+          System.out.println(var8);
+       } catch (IllegalAccessException var9) {
+diff -rupb -B game/decompiled-0.46.1/moonbase/tiles/WallLight.java src/game/java/com/cairn4/moonbase/tiles/WallLight.java
+--- game/decompiled-0.46.1/moonbase/tiles/WallLight.java	2018-12-15 19:06:11.338805400 +0100
++++ src/game/java/com/cairn4/moonbase/tiles/WallLight.java	2018-12-15 20:07:09.123338200 +0100
+@@ -12,12 +12,12 @@ public class WallLight extends BaseModul
+    private float maxPowerDraw = 0.5F;
+    private boolean canBePowered;
+ 
+-   public WallLight(World world, Chunk chunk, int x, int y, BaseModule.ORIENTATIONS o) {
++   public WallLight(World world, Chunk chunk, int x, int y) {
+       super(world, chunk, x, y);
+       this.powerDrawRate = 0.5F;
+-      this.setRotation(o);
+    }
+ 
++   @Override
+    public void setRotation(BaseModule.ORIENTATIONS o) {
+       this.orientation = o;
+       switch(this.orientation) {
+diff -rupb -B game/decompiled-0.46.1/moonbase/TutorialPlayerObserver.java src/game/java/com/cairn4/moonbase/TutorialPlayerObserver.java
+--- game/decompiled-0.46.1/moonbase/TutorialPlayerObserver.java	2018-12-15 19:06:11.384792700 +0100
++++ src/game/java/com/cairn4/moonbase/TutorialPlayerObserver.java	2018-12-15 20:07:09.128337500 +0100
+@@ -15,6 +15,7 @@ public class TutorialPlayerObserver impl
+ 
+    public void update(Observable observable, Object o) {
+       if (o == "playerMoved") {
++         ;
+       }
+ 
+       if (o == "droppedItem" && this.tutorial.stage == Tutorial.STAGES.droppingItems && this.p.playerInventory.getAmountOfItem("scrap") == 0) {
+diff -rupb -B game/decompiled-0.46.1/moonbase/ui/BaseScreen.java src/game/java/com/cairn4/moonbase/ui/BaseScreen.java
+--- game/decompiled-0.46.1/moonbase/ui/BaseScreen.java	2018-12-15 19:06:11.425779600 +0100
++++ src/game/java/com/cairn4/moonbase/ui/BaseScreen.java	2018-12-15 20:07:09.136333900 +0100
+@@ -24,6 +24,9 @@ import com.cairn4.moonbase.AssetManagerS
+ import com.cairn4.moonbase.Audio;
+ import com.cairn4.moonbase.MoonBase;
+ import com.cairn4.moonbase.PlayerInputProcessor;
++import eu.foxiemods.mewnloader.tools.ItemsLoader;
++import eu.foxiemods.mewnloader.tools.ResourceTilesLoader;
++
+ import java.util.ArrayList;
+ import java.util.Iterator;
+ 
+@@ -163,6 +166,8 @@ public class BaseScreen implements Scree
+       this.stage.addActor(this.persistentUIGroup);
+       this.debugGroup = new Group();
+       this.stage.addActor(this.debugGroup);
++      this.skin.addRegions(new TextureAtlas(Gdx.files.absolute(ItemsLoader.targetFilePath)));
++      this.skin.addRegions(new TextureAtlas(Gdx.files.absolute(ResourceTilesLoader.targetFilePath)));
+    }
+ 
+    public void returned() {
+Only in src/game/java/com/cairn4/moonbase/ui: BaseScreen.java.rej
+diff -rupb -B game/decompiled-0.46.1/moonbase/ui/BaseStatResourceBar.java src/game/java/com/cairn4/moonbase/ui/BaseStatResourceBar.java
+--- game/decompiled-0.46.1/moonbase/ui/BaseStatResourceBar.java	2018-12-15 19:06:11.434776400 +0100
++++ src/game/java/com/cairn4/moonbase/ui/BaseStatResourceBar.java	2018-12-15 20:22:16.070410600 +0100
+@@ -37,7 +37,7 @@ public class BaseStatResourceBar {
+       this.group.setTouchable(Touchable.enabled);
+       parentGroup.addActor(this.group);
+       String iconName = "cargo";
+-      final String toolTipText = "Tooltip!";
++      String toolTipText = "Tooltip!";
+       switch(resourceType) {
+       case power:
+          iconName = "hud/basestats-power";
+@@ -58,9 +58,10 @@ public class BaseStatResourceBar {
+          iconName = "cargo";
+       }
+ 
++      final String toolTipText_ = toolTipText;
+       this.group.addListener(new ClickListener() {
+          public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
+-            hud.createTooltip(toolTipText);
++            hud.createTooltip(toolTipText_);
+          }
+ 
+          public void exit(InputEvent event, float x, float y, int pointer, Actor toActor) {
+diff -rupb -B game/decompiled-0.46.1/moonbase/ui/BuggieTrunkUI.java src/game/java/com/cairn4/moonbase/ui/BuggieTrunkUI.java
+--- game/decompiled-0.46.1/moonbase/ui/BuggieTrunkUI.java	2018-12-15 19:06:11.481762800 +0100
++++ src/game/java/com/cairn4/moonbase/ui/BuggieTrunkUI.java	2018-12-15 20:23:55.502255000 +0100
+@@ -108,7 +108,7 @@ public class BuggieTrunkUI extends Popup
+    }
+ 
+    private void updateGrid() {
+-      final int buildableIndex = 0;
++      int buildableIndex = 0;
+ 
+       int bi;
+       ItemButton b;
+@@ -121,18 +121,19 @@ public class BuggieTrunkUI extends Popup
+             b.setCount(((ItemStack)this.playerInventory.getItemList().get(buildableIndex)).getAmount());
+             b.updateDurability(((ItemStack)this.playerInventory.getItemList().get(buildableIndex)).item);
+             b.clearListeners();
++            final int buildableIndex2 = buildableIndex;
+             b.addListener(new ClickListener() {
+                public void clicked(InputEvent event, float x, float y) {
+                   if (!Gdx.input.isKeyPressed(59) && !Gdx.input.isKeyPressed(60)) {
+-                     BuggieTrunkUI.this.moveToStorage(buildableIndex, false);
++                     BuggieTrunkUI.this.moveToStorage(buildableIndex2, false);
+                   } else {
+-                     BuggieTrunkUI.this.moveToStorage(buildableIndex, true);
++                     BuggieTrunkUI.this.moveToStorage(buildableIndex2, true);
+                   }
+ 
+                }
+ 
+                public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
+-                  BuggieTrunkUI.this.createTooltip(((ItemStack)BuggieTrunkUI.this.playerInventory.getItemList().get(buildableIndex)).item.getName());
++                  BuggieTrunkUI.this.createTooltip(((ItemStack)BuggieTrunkUI.this.playerInventory.getItemList().get(buildableIndex2)).item.getName());
+                }
+ 
+                public void exit(InputEvent event, float x, float y, int pointer, Actor toActor) {
+@@ -160,18 +161,19 @@ public class BuggieTrunkUI extends Popup
+             b.setIcon(((ItemStack)this.itemStorage.getItemList().get(buildableIndex)).getSprite());
+             b.setCount(((ItemStack)this.itemStorage.getItemList().get(buildableIndex)).getAmount());
+             b.updateDurability(((ItemStack)this.itemStorage.getItemList().get(buildableIndex)).item);
++            final int buildableIndex_ = buildableIndex;
+             b.addListener(new ClickListener() {
+                public void clicked(InputEvent event, float x, float y) {
+                   if (!Gdx.input.isKeyPressed(59) && !Gdx.input.isKeyPressed(60)) {
+-                     BuggieTrunkUI.this.moveToInventory(buildableIndex, false);
++                     BuggieTrunkUI.this.moveToInventory(buildableIndex_, false);
+                   } else {
+-                     BuggieTrunkUI.this.moveToInventory(buildableIndex, true);
++                     BuggieTrunkUI.this.moveToInventory(buildableIndex_, true);
+                   }
+ 
+                }
+ 
+                public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
+-                  BuggieTrunkUI.this.createTooltip(((ItemStack)BuggieTrunkUI.this.itemStorage.getItemList().get(buildableIndex)).item.getName());
++                  BuggieTrunkUI.this.createTooltip(((ItemStack)BuggieTrunkUI.this.itemStorage.getItemList().get(buildableIndex_)).item.getName());
+                }
+ 
+                public void exit(InputEvent event, float x, float y, int pointer, Actor toActor) {
+Only in src/game/java/com/cairn4/moonbase/ui: BuggieTrunkUI.java.rej
+diff -rupb -B game/decompiled-0.46.1/moonbase/ui/CraftingUI.java src/game/java/com/cairn4/moonbase/ui/CraftingUI.java
+--- game/decompiled-0.46.1/moonbase/ui/CraftingUI.java	2018-12-15 19:06:11.556739300 +0100
++++ src/game/java/com/cairn4/moonbase/ui/CraftingUI.java	2018-12-15 20:07:09.146330600 +0100
+@@ -79,7 +79,7 @@ public class CraftingUI extends Popup im
+       this.gameScreen = gameScreen;
+       this.itemCrafter = itemCrafter;
+       this.unlockedBuildables.clear();
+-      Iterator var4 = itemCrafter.buildables.iterator();
++      Iterator var4 = itemCrafter.registry.buildables.iterator();
+ 
+       while(var4.hasNext()) {
+          String id = (String)var4.next();
+@@ -427,7 +427,7 @@ public class CraftingUI extends Popup im
+    }
+ 
+    private void updateGrid() {
+-      final int buildIndex;
++      int buildIndex;
+       for(buildIndex = 0; buildIndex < this.itemButtonList.size(); ++buildIndex) {
+          ItemButton i = (ItemButton)this.itemButtonList.get(buildIndex);
+          i.disable();
+@@ -436,16 +436,17 @@ public class CraftingUI extends Popup im
+       }
+ 
+       buildIndex = 0;
+-      final int buttonIndex = 0;
++      int buttonIndex = 0;
+ 
+-      for(Iterator var3 = this.itemCrafter.buildables.iterator(); var3.hasNext(); ++buildIndex) {
++      for(Iterator var3 = this.itemCrafter.registry.buildables.iterator(); var3.hasNext(); ++buildIndex) {
+          String buildable = (String)var3.next();
+          if (this.unlockedBuildables.contains(buildable)) {
+             ItemButton i = (ItemButton)this.itemButtonList.get(buttonIndex);
+             i.clearListeners();
++            final int buttonIndex2 = buttonIndex, buildIndex2 = buildIndex;
+             i.addListener(new ClickListener() {
+                public void clicked(InputEvent event, float x, float y) {
+-                  CraftingUI.this.selectRecipie(buildIndex, buttonIndex);
++                  CraftingUI.this.selectRecipie(buildIndex2, buttonIndex2);
+                }
+             });
+             i.enable();
+@@ -478,7 +479,7 @@ public class CraftingUI extends Popup im
+ 
+    private int getNumOfUnlockedBuildables() {
+       int unlockedItems = 0;
+-      Iterator var2 = this.itemCrafter.buildables.iterator();
++      Iterator var2 = this.itemCrafter.registry.buildables.iterator();
+ 
+       while(var2.hasNext()) {
+          String s = (String)var2.next();
+@@ -519,8 +520,8 @@ public class CraftingUI extends Popup im
+       int buttonIndex = 0;
+ 
+       for(int i = 0; i < this.itemCrafter.getBuildables().size(); ++i) {
+-         if (this.isItemUnlocked((String)this.itemCrafter.buildables.get(i))) {
+-            if (((String)this.itemCrafter.buildables.get(i)).equals(itemId)) {
++         if (this.isItemUnlocked((String)this.itemCrafter.registry.buildables.get(i))) {
++            if (((String)this.itemCrafter.registry.buildables.get(i)).equals(itemId)) {
+                return buttonIndex;
+             }
+ 
+diff -rupb -B game/decompiled-0.46.1/moonbase/ui/DiscoveriesPopup.java src/game/java/com/cairn4/moonbase/ui/DiscoveriesPopup.java
+--- game/decompiled-0.46.1/moonbase/ui/DiscoveriesPopup.java	2018-12-15 19:06:11.595726600 +0100
++++ src/game/java/com/cairn4/moonbase/ui/DiscoveriesPopup.java	2018-12-15 20:04:00.544522200 +0100
+@@ -85,7 +85,7 @@ public class DiscoveriesPopup extends Po
+          icon.setTouchable(Touchable.enabled);
+          overlay.add(icon).pad(12.0F);
+          stack.add(overlay);
+-         final String toolTipText = Localization.get("item_researchObject" + i);
++         String toolTipText = Localization.get("item_researchObject" + i);
+          if (this.researchItemFound(i)) {
+             icon.setColor(Color.WHITE);
+          } else {
+@@ -93,9 +93,10 @@ public class DiscoveriesPopup extends Po
+             icon.setColor(0.0F, 0.0F, 0.0F, 0.25F);
+          }
+ 
++         final String toolTipText2 = toolTipText;
+          icon.addListener(new ClickListener() {
+             public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
+-               DiscoveriesPopup.this.createTooltip(toolTipText);
++               DiscoveriesPopup.this.createTooltip(toolTipText2);
+             }
+ 
+             public void exit(InputEvent event, float x, float y, int pointer, Actor toActor) {
+diff -rupb -B game/decompiled-0.46.1/moonbase/ui/GameOverMenu.java src/game/java/com/cairn4/moonbase/ui/GameOverMenu.java
+--- game/decompiled-0.46.1/moonbase/ui/GameOverMenu.java	2018-12-15 19:06:11.620614200 +0100
++++ src/game/java/com/cairn4/moonbase/ui/GameOverMenu.java	2018-12-15 20:07:09.152329700 +0100
+@@ -131,6 +131,7 @@ public class GameOverMenu extends Menu {
+          }
+       })));
+       if (contGame) {
++         ;
+       }
+ 
+    }
+diff -rupb -B game/decompiled-0.46.1/moonbase/ui/Hud.java src/game/java/com/cairn4/moonbase/ui/Hud.java
+--- game/decompiled-0.46.1/moonbase/ui/Hud.java	2018-12-15 19:06:11.653603900 +0100
++++ src/game/java/com/cairn4/moonbase/ui/Hud.java	2018-12-15 20:07:09.166324000 +0100
+@@ -780,6 +780,7 @@ public class Hud extends Menu implements
+       if (o == "updateAir") {
+          this.airProgress.setValue(this.player.playerStatus.getAirPercent());
+          if (this.player.playerStatus.getAir() / this.player.playerStatus.getMaxAir() < 0.2F) {
++            ;
+          }
+ 
+          this.setLowHealthAlpha(this.player.playerStatus.getHealthPercent());
+@@ -941,7 +942,6 @@ public class Hud extends Menu implements
+    }
+ 
+    public void reorderStatusEffectPosition() {
+-      int x = false;
+ 
+       for(int i = 0; i < this.statusEffectUIList.size(); ++i) {
+          ((StatusEffectUI)this.statusEffectUIList.get(i)).setPosition((float)i * -50.0F - (float)i * 10.0F, 0.0F);
+diff -rupb -B game/decompiled-0.46.1/moonbase/ui/HudInventory.java src/game/java/com/cairn4/moonbase/ui/HudInventory.java
+--- game/decompiled-0.46.1/moonbase/ui/HudInventory.java	2018-12-15 19:06:11.661601400 +0100
++++ src/game/java/com/cairn4/moonbase/ui/HudInventory.java	2018-12-15 20:26:06.737405700 +0100
+@@ -75,7 +75,7 @@ public class HudInventory {
+       this.dragAndDrop.clear();
+       final PlayerInventory inventory = playerInventory;
+ 
+-      for(final int i = 0; i < this.itemButtonList.size(); ++i) {
++      for(int i = 0; i < this.itemButtonList.size(); ++i) {
+          final ItemButton ib = (ItemButton)this.itemButtonList.get(i);
+          ib.clearListeners();
+          if (playerInventory.itemList.size() > 0 && i == playerInventory.getSelectedIndex()) {
+@@ -98,8 +98,8 @@ public class HudInventory {
+             String iconName = ItemFactory.getItemSprite(((ItemStack)playerInventory.itemList.get(i)).getId());
+             ib.setIcon(iconName);
+             ib.setCount(((ItemStack)playerInventory.itemList.get(i)).getAmount());
+-            final String tooltipTextTemp = ((ItemStack)playerInventory.itemList.get(i)).getName();
+-            final String secondaryTextTemp = Item.getDesc(((ItemStack)playerInventory.itemList.get(i)).getId());
++            String tooltipTextTemp = ((ItemStack)playerInventory.itemList.get(i)).getName();
++            String secondaryTextTemp = Item.getDesc(((ItemStack)playerInventory.itemList.get(i)).getId());
+             Iterator var9 = ((ItemStack)playerInventory.itemList.get(i)).item.actions.iterator();
+ 
+             while(var9.hasNext()) {
+@@ -136,14 +136,16 @@ public class HudInventory {
+             }
+ 
+             ib.button.setUserObject(i);
++            final int i_ = i;
++            final String tooltipTextTemp_ = tooltipTextTemp, secondaryTextTemp_ = secondaryTextTemp;
+             ib.addListener(new ClickListener(0) {
+                public void clicked(InputEvent event, float x, float y) {
+-                  inventory.setSelection(i);
++                  inventory.setSelection(i_);
+                   inventory.equipItem();
+                }
+ 
+                public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
+-                  HudInventory.this.hud.createTooltip(tooltipTextTemp, secondaryTextTemp);
++                  HudInventory.this.hud.createTooltip(tooltipTextTemp_, secondaryTextTemp_);
+                }
+ 
+                public void exit(InputEvent event, float x, float y, int pointer, Actor toActor) {
+@@ -152,8 +154,8 @@ public class HudInventory {
+             });
+             ib.addListener(new ClickListener(1) {
+                public void clicked(InputEvent event, float x, float y) {
+-                  if (i != playerInventory.getSelectedIndex()) {
+-                     inventory.setSelection(i);
++                  if (i_ != playerInventory.getSelectedIndex()) {
++                     inventory.setSelection(i_);
+                      inventory.equipItem();
+                   }
+ 
+@@ -167,13 +169,13 @@ public class HudInventory {
+             this.dragAndDrop.addSource(new Source(ib.group) {
+                public Payload dragStart(InputEvent event, float x, float y, int pointer) {
+                   Payload payload = new Payload();
+-                  payload.setObject(i);
++                  payload.setObject(i_);
+                   Group payloadGroup = new Group();
+                   Image dragIcon = new Image(ib.icon.getDrawable());
+                   dragIcon.setSize(ib.icon.getWidth(), ib.icon.getHeight());
+                   payloadGroup.addActor(dragIcon);
+                   dragIcon.setPosition(5.0F, -5.0F, 1);
+-                  int amount = ((ItemStack)inventory.getItemList().get(i)).getAmount();
++                  int amount = ((ItemStack)inventory.getItemList().get(i_)).getAmount();
+                   Label count = new Label("" + amount, HudInventory.this.hud.labelStyle);
+                   count.setFontScale(0.45F);
+                   count.setWidth(100.0F);
+Only in src/game/java/com/cairn4/moonbase/ui: HudInventory.java.rej
+diff -rupb -B game/decompiled-0.46.1/moonbase/ui/InventoryUI.java src/game/java/com/cairn4/moonbase/ui/InventoryUI.java
+--- game/decompiled-0.46.1/moonbase/ui/InventoryUI.java	2018-12-15 19:06:11.695591600 +0100
++++ src/game/java/com/cairn4/moonbase/ui/InventoryUI.java	2018-12-15 20:04:00.574512400 +0100
+@@ -99,7 +99,7 @@ public class InventoryUI extends Popup {
+    }
+ 
+    private void updateGrid() {
+-      final int buildableIndex = 0;
++      int buildableIndex = 0;
+ 
+       for(int y = 0; y < 4; ++y) {
+          for(int x = 0; x < 3; ++x) {
+@@ -108,13 +108,14 @@ public class InventoryUI extends Popup {
+                b.enable();
+                b.setIcon(((ItemStack)this.playerInventory.getItemList().get(buildableIndex)).getSprite());
+                b.setCount(((ItemStack)this.playerInventory.getItemList().get(buildableIndex)).getAmount());
++               final int buildableIndex2 = buildableIndex;
+                b.addListener(new ClickListener() {
+                   public void clicked(InputEvent event, float x, float y) {
+-                     InventoryUI.this.selectItem(buildableIndex);
++                     InventoryUI.this.selectItem(buildableIndex2);
+                   }
+ 
+                   public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
+-                     InventoryUI.this.createTooltip(((ItemStack)InventoryUI.this.playerInventory.getItemList().get(buildableIndex)).getName());
++                     InventoryUI.this.createTooltip(((ItemStack)InventoryUI.this.playerInventory.getItemList().get(buildableIndex2)).getName());
+                   }
+ 
+                   public void exit(InputEvent event, float x, float y, int pointer, Actor toActor) {
+diff -rupb -B game/decompiled-0.46.1/moonbase/ui/Menu.java src/game/java/com/cairn4/moonbase/ui/Menu.java
+--- game/decompiled-0.46.1/moonbase/ui/Menu.java	2018-12-15 19:06:11.763571200 +0100
++++ src/game/java/com/cairn4/moonbase/ui/Menu.java	2018-12-15 20:04:00.580510600 +0100
+@@ -39,7 +39,7 @@ public class Menu {
+       Viewport v = baseScreen.viewport;
+       this.stage = baseScreen.stage;
+       if (baseScreen instanceof GameScreen) {
+-         Viewport v = ((GameScreen)baseScreen).hudViewport;
++         v = ((GameScreen)baseScreen).hudViewport;
+          this.stage = ((GameScreen)baseScreen).hudStage;
+       }
+ 
+Only in src/game/java/com/cairn4/moonbase/ui: Menu.java.rej
+diff -rupb -B game/decompiled-0.46.1/moonbase/ui/ResearchPopup.java src/game/java/com/cairn4/moonbase/ui/ResearchPopup.java
+--- game/decompiled-0.46.1/moonbase/ui/ResearchPopup.java	2018-12-15 19:06:11.835548300 +0100
++++ src/game/java/com/cairn4/moonbase/ui/ResearchPopup.java	2018-12-15 20:04:00.587508200 +0100
+@@ -161,7 +161,7 @@ public class ResearchPopup extends Popup
+    }
+ 
+    private void updateInventory() {
+-      final int buildableIndex = 0;
++      int buildableIndex = 0;
+ 
+       for(int y = 0; y < 4; ++y) {
+          for(int x = 0; x < 3; ++x) {
+@@ -182,13 +182,15 @@ public class ResearchPopup extends Popup
+                   b.setIconColor(disabledIconColor);
+                }
+ 
++               final int buildableIndex2 = buildableIndex;
++
+                b.addListener(new ClickListener() {
+                   public void clicked(InputEvent event, float x, float y) {
+-                     ResearchPopup.this.selectObject(buildableIndex);
++                     ResearchPopup.this.selectObject(buildableIndex2);
+                   }
+ 
+                   public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
+-                     ResearchPopup.this.createTooltip(((ItemStack)ResearchPopup.this.playerInventory.getItemList().get(buildableIndex)).getName());
++                     ResearchPopup.this.createTooltip(((ItemStack)ResearchPopup.this.playerInventory.getItemList().get(buildableIndex2)).getName());
+                   }
+ 
+                   public void exit(InputEvent event, float x, float y, int pointer, Actor toActor) {
+diff -rupb -B game/decompiled-0.46.1/moonbase/ui/ResolutionPopup.java src/game/java/com/cairn4/moonbase/ui/ResolutionPopup.java
+--- game/decompiled-0.46.1/moonbase/ui/ResolutionPopup.java	2018-12-15 19:06:11.843546100 +0100
++++ src/game/java/com/cairn4/moonbase/ui/ResolutionPopup.java	2018-12-15 20:04:00.593507600 +0100
+@@ -72,7 +72,7 @@ public class ResolutionPopup extends Pop
+    private void addResolutionOptions() {
+       DisplayMode[] displayModes = Gdx.graphics.getDisplayModes(Gdx.graphics.getPrimaryMonitor());
+ 
+-      for(final int i = 0; i < displayModes.length; ++i) {
++      for(int i = 0; i < displayModes.length; ++i) {
+          TextButtonStyle style = this.baseScreen.altTextBtnStyle;
+          if (i == SettingsLoader.getInstance().settingsData.DISPLAY_MODE) {
+             style = this.baseScreen.textBtnStyle;
+@@ -81,11 +81,12 @@ public class ResolutionPopup extends Pop
+          TextButton btnResolution = new TextButton(displayModes[i].width + "x" + displayModes[i].height + " - " + displayModes[i].refreshRate + "Hz", style);
+          btnResolution.setChecked(true);
+          btnResolution.getLabel().setFontScale(0.4F);
++         final int i2 = i;
+          btnResolution.addListener(new ClickListener() {
+             public void clicked(InputEvent e, float x, float y) {
+-               Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayModes(Gdx.graphics.getPrimaryMonitor())[i]);
++               Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayModes(Gdx.graphics.getPrimaryMonitor())[i2]);
+                ResolutionPopup.this.baseScreen.showMenu(new ConfirmSettingsPopup(ResolutionPopup.this.baseScreen, ResolutionPopup.this));
+-               ResolutionPopup.this.selectedDisplayMode = i;
++               ResolutionPopup.this.selectedDisplayMode = i2;
+             }
+          });
+          this.table.add(btnResolution).height(70.0F).width(300.0F);
+diff -rupb -B game/decompiled-0.46.1/moonbase/ui/StorageUI.java src/game/java/com/cairn4/moonbase/ui/StorageUI.java
+--- game/decompiled-0.46.1/moonbase/ui/StorageUI.java	2018-12-15 19:06:11.894530300 +0100
++++ src/game/java/com/cairn4/moonbase/ui/StorageUI.java	2018-12-15 20:23:55.557238600 +0100
+@@ -127,7 +127,7 @@ public class StorageUI extends Popup {
+    }
+ 
+    private void updateGrid() {
+-      final int buildableIndex = 0;
++      int buildableIndex = 0;
+ 
+       int s;
+       for(s = 0; s < 4; ++s) {
+@@ -140,18 +140,19 @@ public class StorageUI extends Popup {
+                b.setCount(((ItemStack)this.playerInventory.getItemList().get(buildableIndex)).getAmount());
+                b.updateDurability(((ItemStack)this.playerInventory.getItemList().get(buildableIndex)).item);
+                b.clearListeners();
++               final int buildableIndex2 = buildableIndex;
+                b.addListener(new ClickListener() {
+                   public void clicked(InputEvent event, float x, float y) {
+                      if (!Gdx.input.isKeyPressed(59) && !Gdx.input.isKeyPressed(60)) {
+-                        StorageUI.this.moveToStorage(buildableIndex, false);
++                        StorageUI.this.moveToStorage(buildableIndex2, false);
+                      } else {
+-                        StorageUI.this.moveToStorage(buildableIndex, true);
++                        StorageUI.this.moveToStorage(buildableIndex2, true);
+                      }
+ 
+                   }
+ 
+                   public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
+-                     StorageUI.this.createTooltip(((ItemStack)StorageUI.this.playerInventory.getItemList().get(buildableIndex)).item.getName());
++                     StorageUI.this.createTooltip(((ItemStack)StorageUI.this.playerInventory.getItemList().get(buildableIndex2)).item.getName());
+                   }
+ 
+                   public void exit(InputEvent event, float x, float y, int pointer, Actor toActor) {
+@@ -180,18 +181,19 @@ public class StorageUI extends Popup {
+             b.setIcon(((ItemStack)this.itemStorageBehavior.getItemList().get(buildableIndex)).item.getSprite());
+             b.setCount(((ItemStack)this.itemStorageBehavior.getItemList().get(buildableIndex)).getAmount());
+             b.updateDurability(((ItemStack)this.itemStorageBehavior.getItemList().get(buildableIndex)).item);
++            final int buildableIndex_ = buildableIndex;
+             b.addListener(new ClickListener() {
+                public void clicked(InputEvent event, float x, float y) {
+                   if (!Gdx.input.isKeyPressed(59) && !Gdx.input.isKeyPressed(60)) {
+-                     StorageUI.this.moveToInventory(buildableIndex, false);
++                     StorageUI.this.moveToInventory(buildableIndex_, false);
+                   } else {
+-                     StorageUI.this.moveToInventory(buildableIndex, true);
++                     StorageUI.this.moveToInventory(buildableIndex_, true);
+                   }
+ 
+                }
+ 
+                public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
+-                  StorageUI.this.createTooltip(((ItemStack)StorageUI.this.itemStorageBehavior.getItemList().get(buildableIndex)).item.getName());
++                  StorageUI.this.createTooltip(((ItemStack)StorageUI.this.itemStorageBehavior.getItemList().get(buildableIndex_)).item.getName());
+                }
+ 
+                public void exit(InputEvent event, float x, float y, int pointer, Actor toActor) {
+@@ -228,15 +230,16 @@ public class StorageUI extends Popup {
+       this.buttonGroup = new ButtonGroup();
+       this.buttonGroup.setMaxCheckCount(1);
+ 
+-      for(final int ci = 0; ci < StorageColorOptions.colors.length; ++ci) {
++      for(int ci = 0; ci < StorageColorOptions.colors.length; ++ci) {
+          Stack stack = new Stack();
+          Button cb = new Button(this.baseScreen.minorButtonStyle);
+          this.buttonGroup.add(cb);
+          this.buttonList.add(cb);
++         final int cix = ci;
+          cb.addListener(new ClickListener() {
+             public void clicked(InputEvent event, float x, float y) {
+                if (StorageUI.this.storageCrateColorCallback != null) {
+-                  StorageUI.this.storageCrateColorCallback.setColor(StorageColorOptions.colors[ci], ci);
++                  StorageUI.this.storageCrateColorCallback.setColor(StorageColorOptions.colors[cix], cix);
+                }
+ 
+             }
+Only in src/game/java/com/cairn4/moonbase/ui: StorageUI.java.rej
+diff -rupb -B game/decompiled-0.46.1/moonbase/ui/TechTreePopup.java src/game/java/com/cairn4/moonbase/ui/TechTreePopup.java
+--- game/decompiled-0.46.1/moonbase/ui/TechTreePopup.java	2018-12-15 19:06:11.906526100 +0100
++++ src/game/java/com/cairn4/moonbase/ui/TechTreePopup.java	2018-12-15 20:04:00.610502000 +0100
+@@ -515,7 +515,7 @@ public class TechTreePopup extends Popup
+          icon.setTouchable(Touchable.enabled);
+          overlay.add(icon).pad(3.0F);
+          stack.add(overlay);
+-         final String toolTipText = Localization.get("item_researchObject" + i);
++         String toolTipText = Localization.get("item_researchObject" + i);
+          if (this.researchItemFound(i)) {
+             icon.setColor(Color.WHITE);
+          } else {
+@@ -523,9 +523,11 @@ public class TechTreePopup extends Popup
+             icon.setColor(0.0F, 0.0F, 0.0F, 0.5F);
+          }
+ 
++         final String toolTipText2 = toolTipText;
++
+          icon.addListener(new ClickListener() {
+             public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
+-               TechTreePopup.this.createTooltip(toolTipText);
++               TechTreePopup.this.createTooltip(toolTipText2);
+             }
+ 
+             public void exit(InputEvent event, float x, float y, int pointer, Actor toActor) {
+diff -rupb -B game/decompiled-0.46.1/moonbase/ui/WhatsNewPopup.java src/game/java/com/cairn4/moonbase/ui/WhatsNewPopup.java
+--- game/decompiled-0.46.1/moonbase/ui/WhatsNewPopup.java	2018-12-15 19:06:11.955515900 +0100
++++ src/game/java/com/cairn4/moonbase/ui/WhatsNewPopup.java	2018-12-15 21:44:16.915976800 +0100
+@@ -58,7 +58,7 @@ public class WhatsNewPopup extends Popup
+ 
+    private void getJson() {
+       try {
+-         FileHandle json = Gdx.files.local(MoonBase.coreFolder + "whats_new.json");
++         FileHandle json = Gdx.files.internal(MoonBase.coreFolder + "whats_new.json");
+          String jsonString = json.readString();
+          Gdx.app.postRunnable(() -> {
+             this.parseData(jsonString);
+diff -rupb -B game/decompiled-0.46.1/moonbase/Vehicle.java src/game/java/com/cairn4/moonbase/Vehicle.java
+--- game/decompiled-0.46.1/moonbase/Vehicle.java	2018-12-15 19:06:11.986505400 +0100
++++ src/game/java/com/cairn4/moonbase/Vehicle.java	2018-12-15 21:44:16.965960600 +0100
+@@ -33,7 +33,7 @@ public class Vehicle extends Entity {
+    public Vehicle parentVehicle;
+    public Vehicle childVehicle;
+    public long parentVehicleId = -1L;
+-   public static ArrayList vehicleDataList = new ArrayList();
++   public static ArrayList<VehicleDataList> vehicleDataList = new ArrayList();
+    protected VehicleData vd;
+    public static float interactDistance = 200.0F;
+    public float health;
+@@ -64,11 +64,11 @@ public class Vehicle extends Entity {
+    public boolean enginePowerAvailable = true;
+    private Vehicle.DamageStates currentDamageState;
+    boolean powerSliding = false;
+-   protected ArrayList wheels = new ArrayList();
++   protected ArrayList<Wheel> wheels = new ArrayList();
+    public BuggieTrunkUI trunkUI;
+    public BuggieTrunk trunk;
+    public Array inventoryItemDataList = new Array();
+-   public ArrayList trunkItems = new ArrayList();
++   public ArrayList<ItemStack> trunkItems = new ArrayList();
+    float startCrashSpeed = 0.0F;
+    private boolean repairing = false;
+    private boolean prevRepairCheck;
+@@ -120,14 +120,14 @@ public class Vehicle extends Entity {
+ 
+    private void loadVehicleData(String idToLoad) {
+       if (vehicleDataList.size() == 0) {
+-         FileHandle fileHandle = Gdx.files.local(MoonBase.coreFolder + "vehicles.json");
++         FileHandle fileHandle = Gdx.files.internal(MoonBase.coreFolder + "vehicles.json");
+          if (!fileHandle.exists()) {
+             Gdx.app.error("MewnBase", "vehicles.json does not exist");
+          } else {
+             Gdx.app.debug("MewnBase", "Vehicle: Reading vehicle data");
+             Json json = new Json();
+             String fileText = fileHandle.readString();
+-            vehicleDataList = ((VehicleDataList)json.fromJson(VehicleDataList.class, fileText)).vehicleDataList;
++            vehicleDataList = (json.fromJson(VehicleDataList.class, fileText)).vehicleDataList;
+             Gdx.app.debug("MewnBase", "vehicles: list size: " + vehicleDataList.size());
+          }
+       }
+@@ -511,7 +511,7 @@ public class Vehicle extends Entity {
+       Iterator var4 = this.wheels.iterator();
+ 
+       while(var4.hasNext()) {
+-         Wheel w = (Wheel)var4.next();
++         w = (Wheel)var4.next();
+          if (w.isPowered && w.functioning) {
+             w.wheel.applyForce(w.wheel.getWorldVector(fvect), w.wheel.getWorldCenter(), true);
+          }
+diff -rupb -B game/decompiled-0.46.1/moonbase/WeatherManager.java src/game/java/com/cairn4/moonbase/WeatherManager.java
+--- game/decompiled-0.46.1/moonbase/WeatherManager.java	2018-12-15 19:06:12.019497300 +0100
++++ src/game/java/com/cairn4/moonbase/WeatherManager.java	2018-12-15 21:50:19.868847100 +0100
+@@ -16,18 +16,19 @@ import com.bitfire.postprocessing.filter
+ import com.cairn4.moonbase.tiles.Tile;
+ import com.cairn4.moonbase.worlddata.WeatherData;
+ import com.cairn4.moonbase.worlddata.WeatherDataList;
++import jMapGen.Point;
++import za.co.luma.math.sampling.Sampler;
++import za.co.luma.math.sampling.UniformPoissonDiskSampler;
++
+ import java.util.ArrayList;
+ import java.util.Iterator;
+ import java.util.List;
+ import java.util.Observable;
+-import za.co.luma.geom.Vector2DDouble;
+-import za.co.luma.math.sampling.Sampler;
+-import za.co.luma.math.sampling.UniformPoissonDiskSampler;
+ 
+ public class WeatherManager extends Observable {
+    private World world;
+    private FileHandle fileHandle;
+-   private ArrayList weatherDataList = new ArrayList();
++   private ArrayList<WeatherData> weatherDataList = new ArrayList();
+    private WeatherData currentData;
+    private WeatherData nextData;
+    private float timer;
+@@ -62,8 +63,8 @@ public class WeatherManager extends Obse
+    private int numLightningSpots = 12;
+    private static int lightningSpawnRadius = 6;
+    Sampler lightningSampler;
+-   List lightningPointList;
+-   public ArrayList lightningGridPoints = new ArrayList();
++   List<Point> lightningPointList;
++   public ArrayList<GridPoint2> lightningGridPoints = new ArrayList();
+ 
+    public WeatherManager(World world) {
+       this.loadData();
+@@ -73,8 +74,8 @@ public class WeatherManager extends Obse
+       this.currentBloomSettings = new Settings("initial", 1, 0.0F, 1.0F, 1.0F, 0.0F, 1.0F);
+       this.bloom.setSettings(this.currentBloomSettings);
+       this.world.gameScreen.postProcessor.addEffect(this.bloom);
+-      this.currentData = (WeatherData)this.weatherDataList.get(0);
+-      this.nextData = (WeatherData)this.weatherDataList.get(0);
++      this.currentData = this.weatherDataList.get(0);
++      this.nextData = this.weatherDataList.get(0);
+       this.setWeatherPostFx(this.nextData);
+       this.changeWeather();
+       this.weatherColorTint = new MultiplyImage(world.gameScreen.skin.getDrawable("white"));
+@@ -90,14 +91,15 @@ public class WeatherManager extends Obse
+    }
+ 
+    private void loadData() {
+-      this.fileHandle = Gdx.files.local(MoonBase.coreFolder + "weather.json");
++      this.fileHandle = Gdx.files.internal(MoonBase.coreFolder + "weather.json");
+       if (!this.fileHandle.exists()) {
+          Gdx.app.error("MewnBase", "WeatherManager: weather.json does not exist");
+       } else {
+          Gdx.app.debug("MewnBase", "WeatherManager: Reading tile data");
+          Json json = new Json();
+          String fileText = this.fileHandle.readString();
+-         this.weatherDataList = ((WeatherDataList)json.fromJson(WeatherDataList.class, fileText)).weatherDataList;
++         this.weatherDataList = (json.fromJson(WeatherDataList.class, fileText)).weatherDataList;
++
+          Gdx.app.debug("MewnBase", "WeatherManager: list size: " + this.weatherDataList.size());
+       }
+ 
+@@ -171,7 +173,7 @@ public class WeatherManager extends Obse
+ 
+       GridPoint2 gp;
+       while(var3.hasNext()) {
+-         Vector2DDouble v = (Vector2DDouble)var3.next();
++         Point v = (Point)var3.next();
+          gp = World.getGridPointFromPoolAndSet((int)v.x, (int)v.y);
+          this.lightningGridPoints.add(gp);
+       }
+@@ -179,7 +181,7 @@ public class WeatherManager extends Obse
+       for(int i = 0; i < this.numLightningSpots && !this.lightningGridPoints.isEmpty(); ++i) {
+          int randomIndex = MathUtils.random(this.lightningGridPoints.size() - 1);
+          gp = (GridPoint2)World.gridPointPool.obtain();
+-         gp.set((GridPoint2)this.lightningGridPoints.get(randomIndex));
++         gp.set(this.lightningGridPoints.get(randomIndex));
+          this.lightningGridPoints.remove(randomIndex);
+          LightningStrike ls = new LightningStrike(this.world, (float)gp.x * Tile.TILE_SIZE + Tile.TILE_SIZE / 2.0F, (float)gp.y * Tile.TILE_SIZE + Tile.TILE_SIZE / 2.0F);
+          if (i == 0) {
+@@ -192,7 +194,7 @@ public class WeatherManager extends Obse
+       var3 = this.lightningGridPoints.iterator();
+ 
+       while(var3.hasNext()) {
+-         GridPoint2 gp = (GridPoint2)var3.next();
++         gp = (GridPoint2)var3.next();
+          World.gridPointPool.free(gp);
+       }
+ 
+@@ -252,7 +254,6 @@ public class WeatherManager extends Obse
+          float r = MathUtils.random(0.0F, max);
+          float baseR = 0.0F;
+ 
+-         WeatherData w;
+          for(Iterator var4 = this.weatherDataList.iterator(); var4.hasNext(); baseR += w.chance) {
+             w = (WeatherData)var4.next();
+             if (r <= w.chance + baseR) {
+diff -rupb -B game/decompiled-0.46.1/moonbase/World.java src/game/java/com/cairn4/moonbase/World.java
+--- game/decompiled-0.46.1/moonbase/World.java	2018-12-15 19:06:12.073479000 +0100
++++ src/game/java/com/cairn4/moonbase/World.java	2018-12-15 20:07:09.190316800 +0100
+@@ -1,7 +1,7 @@
+ package com.cairn4.moonbase;
+ 
++import aurelienribon.bodyeditor.BodyEditorLoader;
+ import box2dLight.RayHandler;
+-import com.aurelienribon.bodyeditor.BodyEditorLoader;
+ import com.badlogic.gdx.Gdx;
+ import com.badlogic.gdx.audio.Sound;
+ import com.badlogic.gdx.graphics.Color;
+@@ -11,28 +11,14 @@ import com.badlogic.gdx.math.Vector2;
+ import com.badlogic.gdx.utils.Pool;
+ import com.badlogic.gdx.utils.Pools;
+ import com.cairn4.moonbase.techtree.TechManager;
+-import com.cairn4.moonbase.tiles.AirCleaner;
+-import com.cairn4.moonbase.tiles.Airlock;
+-import com.cairn4.moonbase.tiles.BaseModule;
+-import com.cairn4.moonbase.tiles.CraftingStation;
+-import com.cairn4.moonbase.tiles.GroundTile;
+-import com.cairn4.moonbase.tiles.HabitatModule;
+-import com.cairn4.moonbase.tiles.Lander;
+-import com.cairn4.moonbase.tiles.SolarPanel;
+-import com.cairn4.moonbase.tiles.Tile;
++import com.cairn4.moonbase.tiles.*;
+ import com.cairn4.moonbase.ui.GameScreen;
+ import com.cairn4.moonbase.ui.MainMenu;
+ import com.cairn4.moonbase.ui.PausePopup;
+-import com.cairn4.moonbase.worlddata.ChunkLoader;
+-import com.cairn4.moonbase.worlddata.ItemDropperData;
+-import com.cairn4.moonbase.worlddata.ItemDropperFactory;
+-import com.cairn4.moonbase.worlddata.ItemDropperSpawnBiome;
+-import com.cairn4.moonbase.worlddata.WeatherData;
+-import java.util.ArrayList;
+-import java.util.HashMap;
+-import java.util.Iterator;
+-import java.util.Timer;
+-import java.util.TimerTask;
++import com.cairn4.moonbase.worlddata.*;
++import eu.foxiemods.mewnloader.MewnEvent;
++
++import java.util.*;
+ import java.util.Map.Entry;
+ 
+ public class World {
+@@ -46,7 +32,7 @@ public class World {
+    public BaseManager baseManager;
+    public TechManager techManager;
+    public RegrowthManager regrowthManager;
+-   public ArrayList entityList = new ArrayList();
++   public ArrayList<Entity> entityList = new ArrayList();
+    public BodyEditorLoader bodyEditorLoader;
+    public static float METERS_PER_TILE = 4.0F;
+    public long nextEntityId = 0L;
+@@ -139,7 +125,9 @@ public class World {
+       }
+ 
+       if (this.gameScreen.game.getCurrentMission().missionType == Mission.MissionTypes.tutorial) {
+-         new Airlock(this, startingChunk, 4, 5, BaseModule.ORIENTATIONS.west);
++         Airlock airlock = new Airlock(this, startingChunk, 4, 5);
++         airlock.setRotation(BaseModule.ORIENTATIONS.west);
++
+          new HabitatModule(this, startingChunk, 5, 5);
+          new HabitatModule(this, startingChunk, 5, 4);
+          new AirCleaner(this, startingChunk, 5, 6);
+@@ -208,13 +196,14 @@ public class World {
+ 
+    public void update(float delta) {
+       this.rayHandler.setCombinedMatrix(this.gameScreen.b2dCam);
+-      switch(this.gameState) {
++      switch (this.gameState) {
+       case start:
+          this.gameScreen.camera.position.set(this.lander.getXCenter(), this.lander.getYCenter() - Tile.TILE_SIZE, 0.0F);
+          this.updateChunks(delta);
+          this.updatePlayerSpine(delta);
+          break;
+       case playing:
++            MewnEvent.GameTickPre.fire();
+          this.gameScreen.physicsCounter.start();
+          this.baseManager.update(delta);
+          this.regrowthManager.update(delta);
+@@ -230,18 +219,19 @@ public class World {
+          }
+ 
+          int i;
+-         for(i = 0; i < this.entityList.size(); ++i) {
+-            ((Entity)this.entityList.get(i)).update(delta);
++            for (i = 0; i < this.entityList.size(); ++i) {
++               ((Entity) this.entityList.get(i)).update(delta);
+          }
+ 
+-         for(i = this.entityList.size() - 1; i >= 0; --i) {
+-            if (((Entity)this.entityList.get(i)).readyToRemove) {
+-               ((Entity)this.entityList.get(i)).remove();
++            for (i = this.entityList.size() - 1; i >= 0; --i) {
++               if (((Entity) this.entityList.get(i)).readyToRemove) {
++                  ((Entity) this.entityList.get(i)).remove();
+                this.entityList.remove(i);
+             }
+          }
+ 
+          this.updateChunks(delta);
++            MewnEvent.GameTickPost.fire();
+       case paused:
+       default:
+          break;
+diff -rupb -B game/decompiled-0.46.1/moonbase/worlddata/GameSaveData.java src/game/java/com/cairn4/moonbase/worlddata/GameSaveData.java
+--- game/decompiled-0.46.1/moonbase/worlddata/GameSaveData.java	2018-12-15 19:06:12.148458500 +0100
++++ src/game/java/com/cairn4/moonbase/worlddata/GameSaveData.java	2018-12-15 20:04:00.626496000 +0100
+@@ -1,5 +1,8 @@
+ package com.cairn4.moonbase.worlddata;
+ 
++import com.cairn4.moonbase.RespawningItemDropper;
++import com.cairn4.moonbase.techtree.TechUpgrade;
++
+ import java.util.ArrayList;
+ 
+ public class GameSaveData {
+@@ -24,8 +27,8 @@ public class GameSaveData {
+    public PlayerData playerData;
+    public boolean tutorialFinished;
+    public String tutorialStage;
+-   public ArrayList unlockedTech = new ArrayList();
++   public ArrayList<TechUpgrade> unlockedTech = new ArrayList();
+    public int techSamples;
+-   public ArrayList entityDataList = new ArrayList();
+-   public ArrayList regrowthManagerList = new ArrayList();
++   public ArrayList<EntityData> entityDataList = new ArrayList();
++   public ArrayList<RespawningItemDropper> regrowthManagerList = new ArrayList();
+ }
+diff -rupb -B game/decompiled-0.46.1/moonbase/worlddata/ItemDropperData.java src/game/java/com/cairn4/moonbase/worlddata/ItemDropperData.java
+--- game/decompiled-0.46.1/moonbase/worlddata/ItemDropperData.java	2018-12-15 19:06:12.167451200 +0100
++++ src/game/java/com/cairn4/moonbase/worlddata/ItemDropperData.java	2018-12-15 21:48:51.603547100 +0100
+@@ -10,13 +11,13 @@ public class ItemDropperData {
+    public float minDistanceBetween;
+    public float noiseFeature;
+    public float noiseSmooth;
+-   public ArrayList spawnBiomes = new ArrayList();
++   public ArrayList<ItemDropperSpawnBiome> spawnBiomes = new ArrayList();
+    public boolean zSort;
+-   public ArrayList sprites;
+-   public ArrayList regrowSprites;
++   public ArrayList<String> sprites;
++   public ArrayList<String> regrowSprites;
+    public String spinePath;
+    public float spineBaseScale;
+-   public ArrayList spineAnimations;
++   public ArrayList<String> spineAnimations;
+    public String physicsBody;
+    public Color minimapColor;
+    public float regrowTime;
+@@ -24,7 +25,9 @@ public class ItemDropperData {
+    public float daysToRespawn;
+    public String toolTypeRequired;
+    public int toolLevelRequired;
+-   public ArrayList interactWith = new ArrayList();
++   public ArrayList<TileInteractData> interactWith = new ArrayList();
+    public float transformTime;
+    public String transformNewId;
++
++   public String modId;
+ }
+Only in src/game/java/com/cairn4/moonbase/worlddata: ItemDropperData.java.rej
+diff -rupb -B game/decompiled-0.46.1/moonbase/worlddata/ItemDropperFactory.java src/game/java/com/cairn4/moonbase/worlddata/ItemDropperFactory.java
+--- game/decompiled-0.46.1/moonbase/worlddata/ItemDropperFactory.java	2018-12-15 19:06:12.175448100 +0100
++++ src/game/java/com/cairn4/moonbase/worlddata/ItemDropperFactory.java	2018-12-15 21:43:50.020908300 +0100
+@@ -9,13 +9,15 @@ import com.cairn4.moonbase.MoonBase;
+ import com.cairn4.moonbase.World;
+ import com.cairn4.moonbase.tiles.ItemDropper;
+ import com.cairn4.moonbase.tiles.ResearchObject;
++import eu.foxiemods.mewnloader.tools.ResourceTilesLoader;
++
+ import java.util.ArrayList;
+ import java.util.Iterator;
+ 
+ public class ItemDropperFactory {
+    private static ItemDropperFactory instance;
+    private FileHandle file;
+-   public ArrayList itemDropperDataList = new ArrayList();
++   public ArrayList<ItemDropperData> itemDropperDataList = new ArrayList();
+ 
+    private ItemDropperFactory() {
+       this.load();
+@@ -30,13 +32,14 @@ public class ItemDropperFactory {
+    }
+ 
+    public void load() {
+-      this.file = Gdx.files.local(MoonBase.coreFolder + "resource_tiles.json");
++      this.file = Gdx.files.internal(MoonBase.coreFolder + "resource_tiles.json");
+       if (this.file.exists()) {
+          Gdx.app.log("MoonBase", "ItemDropperFactory: Loading Item Droppers");
+          Json json = new Json();
+          String fileText = this.file.readString();
+          ItemDropperSet ids = (ItemDropperSet)json.fromJson(ItemDropperSet.class, fileText);
+          this.itemDropperDataList = ids.itemDropperList;
++         this.itemDropperDataList.addAll(ResourceTilesLoader.ITEMDROPPERLIST);
+       } else {
+          Gdx.app.error("MoonBase", "ItemDropperFactory: Item dropper json file not found!");
+       }
+diff -rupb -B game/decompiled-0.46.1/moonbase/worlddata/ItemDropperSet.java src/game/java/com/cairn4/moonbase/worlddata/ItemDropperSet.java
+--- game/decompiled-0.46.1/moonbase/worlddata/ItemDropperSet.java	2018-12-15 19:06:12.186445100 +0100
++++ src/game/java/com/cairn4/moonbase/worlddata/ItemDropperSet.java	2018-12-15 20:04:00.649489100 +0100
+@@ -3,5 +3,5 @@ package com.cairn4.moonbase.worlddata;
+ import java.util.ArrayList;
+ 
+ public class ItemDropperSet {
+-   public ArrayList itemDropperList = new ArrayList();
++   public ArrayList<ItemDropperData> itemDropperList = new ArrayList();
+ }
+diff -rupb -B game/decompiled-0.46.1/moonbase/worlddata/SuitUpgradeData.java src/game/java/com/cairn4/moonbase/worlddata/SuitUpgradeData.java
+--- game/decompiled-0.46.1/moonbase/worlddata/SuitUpgradeData.java	2018-12-15 19:06:12.218435000 +0100
++++ src/game/java/com/cairn4/moonbase/worlddata/SuitUpgradeData.java	2018-12-15 20:04:00.653488000 +0100
+@@ -3,5 +3,5 @@ package com.cairn4.moonbase.worlddata;
+ import java.util.ArrayList;
+ 
+ public class SuitUpgradeData {
+-   public ArrayList suitLevels;
++   public ArrayList<SuitLevel> suitLevels;
+ }
+diff -rupb -B game/decompiled-0.46.1/moonbase/worlddata/TileData.java src/game/java/com/cairn4/moonbase/worlddata/TileData.java
+--- game/decompiled-0.46.1/moonbase/worlddata/TileData.java	2018-12-15 19:06:12.223433100 +0100
++++ src/game/java/com/cairn4/moonbase/worlddata/TileData.java	2018-12-15 20:04:00.658486400 +0100
+@@ -1,14 +1,9 @@
+ package com.cairn4.moonbase.worlddata;
+ 
+ import com.badlogic.gdx.Gdx;
+-import com.cairn4.moonbase.tiles.Airlock;
+-import com.cairn4.moonbase.tiles.AutoAirlock;
+-import com.cairn4.moonbase.tiles.BaseModule;
+-import com.cairn4.moonbase.tiles.ItemDropper;
+-import com.cairn4.moonbase.tiles.ItemPile;
+-import com.cairn4.moonbase.tiles.Tile;
+-import com.cairn4.moonbase.tiles.WallLight;
++import com.cairn4.moonbase.tiles.*;
+ import com.cairn4.moonbase.tiles.behaviors.Behavior;
++
+ import java.util.ArrayList;
+ import java.util.Iterator;
+ 
+@@ -20,10 +15,10 @@ public class TileData {
+    public int itemNum;
+    public float interactTime;
+    public String itemDropperId;
+-   public ArrayList storageDataList = new ArrayList();
++   public ArrayList<InventoryItemData> storageDataList = new ArrayList();
+    public String orientation;
+-   public ArrayList behaviorDataList = new ArrayList();
+-   public ArrayList disasterList = new ArrayList();
++   public ArrayList<BehaviorData> behaviorDataList = new ArrayList();
++   public ArrayList<String> disasterList = new ArrayList();
+ 
+    public TileData() {
+    }
+diff -rupb -B game/decompiled-0.46.1/moonbase/worlddata/TileInteractData.java src/game/java/com/cairn4/moonbase/worlddata/TileInteractData.java
+--- game/decompiled-0.46.1/moonbase/worlddata/TileInteractData.java	2018-12-15 19:06:12.228431600 +0100
++++ src/game/java/com/cairn4/moonbase/worlddata/TileInteractData.java	2018-12-15 21:51:40.734264200 +0100
+@@ -5,8 +5,8 @@ import java.util.ArrayList;
+ public class TileInteractData {
+    public boolean withAnyItem;
+    public boolean disabledWhenGrowing;
+-   public ArrayList equippedIds;
++   public ArrayList<String> equippedIds;
+    public float interactionDuration;
+-   public ArrayList actions;
++   public ArrayList<TileInteractionAction> actions;
+    public String dropParticleSprite;
+ }
+diff -rupb -B game/decompiled-0.46.1/moonbase/worlddata/TileInteractionAction.java src/game/java/com/cairn4/moonbase/worlddata/TileInteractionAction.java
+--- game/decompiled-0.46.1/moonbase/worlddata/TileInteractionAction.java	2018-12-15 19:06:12.234430400 +0100
++++ src/game/java/com/cairn4/moonbase/worlddata/TileInteractionAction.java	2018-12-15 20:18:53.082238700 +0100
+@@ -5,10 +5,10 @@ import java.util.ArrayList;
+ public class TileInteractionAction {
+    public String type;
+    public String particleEffect;
+-   public ArrayList spineAnimations;
++   public ArrayList<String> spineAnimations;
+    public boolean onlyIfNotRegrowing;
+    public int minDrop;
+    public int maxDrop;
+-   public ArrayList itemList = new ArrayList();
+-   public ArrayList guaranteedDrops = new ArrayList();
++   public ArrayList<ItemDropperItemData> itemList = new ArrayList();
++   public ArrayList<InventoryItemData> guaranteedDrops = new ArrayList();
+ }
+diff -rupb -B game/decompiled-0.46.1/moonbase/worlddata/VehicleDataList.java src/game/java/com/cairn4/moonbase/worlddata/VehicleDataList.java
+--- game/decompiled-0.46.1/moonbase/worlddata/VehicleDataList.java	2018-12-15 19:06:12.244427000 +0100
++++ src/game/java/com/cairn4/moonbase/worlddata/VehicleDataList.java	2018-12-15 20:14:35.854804000 +0100
+@@ -3,5 +3,5 @@ package com.cairn4.moonbase.worlddata;
+ import java.util.ArrayList;
+ 
+ public class VehicleDataList {
+-   public ArrayList vehicleDataList = new ArrayList();
++   public ArrayList<VehicleDataList> vehicleDataList = new ArrayList();
+ }
+diff -rupb -B game/decompiled-0.46.1/moonbase/worlddata/WeatherDataList.java src/game/java/com/cairn4/moonbase/worlddata/WeatherDataList.java
+--- game/decompiled-0.46.1/moonbase/worlddata/WeatherDataList.java	2018-12-15 19:06:12.255423000 +0100
++++ src/game/java/com/cairn4/moonbase/worlddata/WeatherDataList.java	2018-12-15 20:04:00.663484100 +0100
+@@ -3,5 +3,5 @@ package com.cairn4.moonbase.worlddata;
+ import java.util.ArrayList;
+ 
+ public class WeatherDataList {
+-   public ArrayList weatherDataList = new ArrayList();
++   public ArrayList<WeatherData> weatherDataList = new ArrayList();
+ }
+diff -rupb -B game/decompiled-0.46.1/moonbase/ZSortComparator.java src/game/java/com/cairn4/moonbase/ZSortComparator.java
+--- game/decompiled-0.46.1/moonbase/ZSortComparator.java	2018-12-15 19:06:12.273417400 +0100
++++ src/game/java/com/cairn4/moonbase/ZSortComparator.java	2018-12-15 20:04:00.668482500 +0100
+@@ -3,7 +3,7 @@ package com.cairn4.moonbase;
+ import com.badlogic.gdx.scenes.scene2d.Actor;
+ import java.util.Comparator;
+ 
+-public class ZSortComparator implements Comparator {
++public class ZSortComparator implements Comparator<Actor> {
+    public int compare(Actor a1, Actor a2) {
+       if (a1 != null && a1.getUserObject() != null && a1.getUserObject() instanceof Float && a2 != null && a2.getUserObject() != null && a2.getUserObject() instanceof Float) {
+          float z1 = (Float)a1.getUserObject();

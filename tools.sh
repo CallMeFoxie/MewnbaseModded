@@ -57,31 +57,25 @@ patch_source() {
   [ ! -d game/decompiled-${GAME_VERSION} ] && echo "Missing decompiled folder! Run decompile_jar first!" && exit 1
   [ ! -f patches/patches-${GAME_VERSION}-compile.patch ] && echo "Missing patch file for ${GAME_VERSION} version!" && exit 1
   
-  [ -d game/patched-${GAME_VERSION} ] && rm -rf game/patched-${GAME_VERSION}
-  mkdir game/patched-${GAME_VERSION}
-  cp -rp game/decompiled-${GAME_VERSION}/* game/patched-${GAME_VERSION}/
-  cd game/patched-${GAME_VERSION}/
-  patch -p5 -l --ignore-whitespace --binary --no-backup-if-mismatch < ../../patches/patches-${GAME_VERSION}-compile.patch
-
   [ $? -ne 0 ] && echo "Failed to patch source files!" && exit 1
 }
 
 copy_to_src() {
-  [ ! -d game/patched-${GAME_VERSION} ] && echo "Missing patched folder! Run patch_soruce first!" && exit 1
+  [ ! -d game/decompiled-${GAME_VERSION} ] && echo "Missing patched folder! Run patch_soruce first!" && exit 1
   [ -d src/game/java/com/cairn4 ] && echo "Target folder already exists, NOT running!" && exit 1
   [ ! -f patches/patches-${GAME_VERSION}-api.patch ] && echo "Missing API patch file!" && exit 1
 
   mkdir -p src/game/java/com/cairn4
-  cp -rp game/patched-${GAME_VERSION}/* src/game/java/com/cairn4
+  cp -rp game/decompiled-${GAME_VERSION}/* src/game/java/com/cairn4
   cd src/game/java/com/cairn4
-  patch -p5 -l --ignore-whitespace --binary --no-backup-if-mismatch < ../../../../../patches/patches-${GAME_VERSION}-api.patch
+  patch -p5 -l --ignore-whitespace --binary --no-backup-if-mismatch < ../../../../../patches/patches-${GAME_VERSION}.patch
 }
 
 diff_base_game() {
   [ ! -d src/game/java/com/cairn4 ] && echo "Target folder does not exist! Nothing to diff!" && exit 1
-  [ ! -d game/patched-${GAME_VERSION} ] && echo "Missing patched folder! Run patch_source first!" && exit 1
+  [ ! -d game/decompiled-${GAME_VERSION} ] && echo "Missing decompiled folder! Run patch_source first!" && exit 1
 
-  diff -rupb -B game/patched-${GAME_VERSION} src/game/java/com/cairn4 > patches/patches-${GAME_VERSION}-api.patch
+  diff -rupb -B game/decompiled-${GAME_VERSION} src/game/java/com/cairn4 > patches/patches-${GAME_VERSION}.patch
 
   [ $? -ne 1 ] && echo "Error creating a diff!" && exit 1
 }

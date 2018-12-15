@@ -15,7 +15,7 @@ repositories {
 
 ext {
     gdxVersion = "1.9.8"
-    gameVersion = "0.45"
+    gameVersion = "0.46.1"
 }
 
 buildscript {
