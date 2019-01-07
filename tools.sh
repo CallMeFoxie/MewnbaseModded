@@ -53,17 +53,10 @@ decompile_jar() {
   fi
 }
 
-patch_source() {
-  [ ! -d game/decompiled-${GAME_VERSION} ] && echo "Missing decompiled folder! Run decompile_jar first!" && exit 1
-  [ ! -f patches/patches-${GAME_VERSION}-compile.patch ] && echo "Missing patch file for ${GAME_VERSION} version!" && exit 1
-  
-  [ $? -ne 0 ] && echo "Failed to patch source files!" && exit 1
-}
-
 copy_to_src() {
   [ ! -d game/decompiled-${GAME_VERSION} ] && echo "Missing patched folder! Run patch_soruce first!" && exit 1
   [ -d src/game/java/com/cairn4 ] && echo "Target folder already exists, NOT running!" && exit 1
-  [ ! -f patches/patches-${GAME_VERSION}-api.patch ] && echo "Missing API patch file!" && exit 1
+  [ ! -f patches/patches-${GAME_VERSION}.patch ] && echo "Missing API patch file!" && exit 1
 
   mkdir -p src/game/java/com/cairn4
   cp -rp game/decompiled-${GAME_VERSION}/* src/game/java/com/cairn4
@@ -109,9 +102,6 @@ case "$task" in
   "decompile_jar")
     decompile_jar
     ;;
-  "patch_source")
-    patch_source
-    ;;
   "copy_to_src")
     copy_to_src
     ;;
@@ -122,7 +112,6 @@ case "$task" in
     $0 build_fernflower
     $0 unpack_jar
     $0 decompile_jar
-    $0 patch_source
     $0 copy_to_src
     $0 copy_resources
     ./gradlew idea
